@@ -1,15 +1,16 @@
-import axios from 'axios';
+import axios from 'axios'
+import { useAuth } from '@/store/auth-store'
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: 'https://smart-resto-api.onrender.com',
-});
+})
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+  const token = useAuth.getState().token
 
-export default api;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
+})

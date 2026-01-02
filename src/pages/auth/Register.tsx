@@ -3,62 +3,142 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterSchema } from "@/lib/auth-schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import api from "@/lib/api";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { api } from "@/lib/api";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export function RegisterPage() {
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: zodResolver(registerSchema)
+  const navigate = useNavigate();
+  const form = useForm<RegisterSchema>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      companyName: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   const onSubmit = async (data: RegisterSchema) => {
     try {
-      // Omitimos o confirmPassword usando desestruturação
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, ...payload } = data;
       await api.post("/auth/sign-up", payload);
-      alert("Conta criada com sucesso! Faça login.");
+      
+      toast.success("Conta criada com sucesso!", {
+        description: "Você já pode fazer login no sistema.",
+      });
+      
+      navigate("/login");
     } catch (error) {
-      console.error("Erro ao registar:", error);
+      console.error(error);
+      toast.error("Erro ao criar conta", {
+        description: "Verifique os dados e tente novamente.",
+      });
     }
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 max-w-md mx-auto border rounded-xl shadow-sm mt-20 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Criar conta no Smart Restô</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label className="text-slate-700 dark:text-slate-300">Nome Completo</Label>
-          <Input {...register("name")} placeholder="Seu nome" className="dark:bg-slate-800 dark:text-white" />
-          {errors.name && <p className="text-red-500 text-sm">{errors.name.message as string}</p>}
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Criar conta</CardTitle>
+          <CardDescription>
+            Comece a gerir o seu restaurante de forma inteligente
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome Completo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Seu nome" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="companyName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome do Restaurante</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Cantina do Arthur" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="space-y-2">
-          <Label className="text-slate-700 dark:text-slate-300">Nome do Restaurante</Label>
-          <Input {...register("companyName")} placeholder="Ex: Cantina do Arthur" className="dark:bg-slate-800 dark:text-white" />
-          {errors.companyName && <p className="text-red-500 text-sm">{errors.companyName.message as string}</p>}
-        </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="email@exemplo.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="space-y-2">
-          <Label className="text-slate-700 dark:text-slate-300">E-mail</Label>
-          <Input {...register("email")} type="email" placeholder="email@exemplo.com" className="dark:bg-slate-800 dark:text-white" />
-          {errors.email && <p className="text-red-500 text-sm">{errors.email.message as string}</p>}
-        </div>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="space-y-2">
-          <Label className="text-slate-700 dark:text-slate-300">Senha</Label>
-          <Input {...register("password")} type="password" className="dark:bg-slate-800 dark:text-white" />
-          {errors.password && <p className="text-red-500 text-sm">{errors.password.message as string}</p>}
-        </div>
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirmar Senha</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="space-y-2">
-          <Label className="text-slate-700 dark:text-slate-300">Confirmar Senha</Label>
-          <Input {...register("confirmPassword")} type="password" className="dark:bg-slate-800 dark:text-white" />
-          {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message as string}</p>}
-        </div>
-
-        <Button type="submit" className="w-full">Registar Empresa</Button>
-      </form>
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Criando conta..." : "Registar Empresa"}
+              </Button>
+            </form>
+          </Form>
+          
+          <div className="mt-4 text-center text-sm">
+            <p className="text-slate-500">
+              Já tem uma conta?{" "}
+              <Link to="/login" className="text-primary hover:underline font-medium">
+                Fazer login
+              </Link>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
