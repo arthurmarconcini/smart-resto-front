@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { LoginPage } from '@/pages/auth/Login'
 import { RegisterPage } from '@/pages/auth/Register'
@@ -6,8 +7,17 @@ import { WelcomePage } from '@/pages/Welcome'
 import { PrivateRoute, PublicRoute } from '@/components/RouteGuards'
 import { Toaster } from "@/components/ui/sonner"
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { useAuth } from '@/store/auth-store'
 
 function App() {
+  const { user, token, refreshProfile } = useAuth()
+
+  useEffect(() => {
+    if (token && !user) {
+      refreshProfile()
+    }
+  }, [token, user, refreshProfile])
+
   return (
     <BrowserRouter>
       <Routes>
