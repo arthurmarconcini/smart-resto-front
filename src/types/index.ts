@@ -26,7 +26,18 @@ export interface Expense {
   description: string;
   amount: number;
   date: string;
+  dueDate?: string;
+  status?: 'PAID' | 'PENDING';
   categoryId?: string;
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Revenue {
+  id: string;
+  month: string; // "YYYY-MM"
+  totalRevenue: number;
   companyId: string;
   createdAt: string;
   updatedAt: string;
