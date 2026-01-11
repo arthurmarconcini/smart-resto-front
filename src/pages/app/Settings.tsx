@@ -143,7 +143,7 @@ export function SettingsPage() {
                           step="0.01"
                           className="pl-9 h-11 text-lg"
                           {...field}
-                          value={(field.value as any) ?? ''}
+                          value={(field.value as string | number) ?? ''}
 
                         />
                       </div>
@@ -174,7 +174,7 @@ export function SettingsPage() {
                           step="0.01"
                           className="pl-9 h-11 text-lg border-primary/30 focus-visible:ring-primary/50 bg-primary/5"
                           {...field}
-                          value={(field.value as any) ?? ''}
+                          value={(field.value as string | number) ?? ''}
 
                         />
                       </div>
@@ -218,7 +218,7 @@ export function SettingsPage() {
                             step="0.1"
                             className="pl-9"
                             {...field}
-                            value={(field.value as any) ?? ''}
+                            value={(field.value as string | number) ?? ''}
 
                           />
                         </div>
@@ -244,7 +244,7 @@ export function SettingsPage() {
                             step="0.1"
                             className="pl-9"
                             {...field}
-                            value={(field.value as any) ?? ''}
+                            value={(field.value as string | number) ?? ''}
 
                           />
                         </div>
@@ -270,7 +270,7 @@ export function SettingsPage() {
                             step="0.1"
                             className="pl-9"
                             {...field}
-                            value={(field.value as any) ?? ''}
+                            value={(field.value as string | number) ?? ''}
 
                           />
                         </div>
