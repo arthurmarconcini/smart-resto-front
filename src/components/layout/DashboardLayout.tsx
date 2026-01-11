@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LayoutDashboard, Receipt, Salad, Settings, LogOut, Menu, ChefHat, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { SetupBanner } from "@/components/app/SetupBanner";
 
 const sidebarItems = [
   {
@@ -81,10 +83,21 @@ function SidebarContent({ pathname, onLinkClick }: SidebarContentProps) {
 }
 
 export function DashboardLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, isCompanyConfigured } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    // If authenticated, has user data, but company is not configured
+    if (user && !isCompanyConfigured()) {
+      // Allow user to be on the settings page
+      if (location.pathname !== "/dashboard/settings") {
+        toast.warning("Por favor, finalize a configuração da sua conta.");
+        navigate("/dashboard/settings");
+      }
+    }
+  }, [user, isCompanyConfigured, location.pathname, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -100,6 +113,10 @@ export function DashboardLayout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
+        <div className="px-4 md:px-6 pt-4">
+          <SetupBanner />
+        </div>
+        
         {/* Header */}
         <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-6 flex items-center justify-between">
           <div className="md:hidden">

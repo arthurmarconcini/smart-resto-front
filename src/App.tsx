@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { LoginPage } from '@/pages/auth/Login'
 import { RegisterPage } from '@/pages/auth/Register'
 import { DashboardPage } from '@/pages/app/Dashboard'
+import { SettingsPage } from '@/pages/app/Settings'
 import { WelcomePage } from '@/pages/Welcome'
 import { PrivateRoute, PublicRoute } from '@/components/RouteGuards'
 import { Toaster } from "@/components/ui/sonner"
@@ -30,6 +31,7 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/settings" element={<SettingsPage />} />
             {/* Future routes: /dashboard/products, /dashboard/expenses */}
           </Route>
         </Route>
