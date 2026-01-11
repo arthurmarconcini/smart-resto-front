@@ -4,6 +4,7 @@ import { LoginPage } from '@/pages/auth/Login'
 import { RegisterPage } from '@/pages/auth/Register'
 import { DashboardPage } from '@/pages/app/Dashboard'
 import { SettingsPage } from '@/pages/app/Settings'
+import { ProductsPage } from '@/pages/products/ProductsPage'
 import { WelcomePage } from '@/pages/Welcome'
 import { PrivateRoute, PublicRoute } from '@/components/RouteGuards'
 import { Toaster } from "@/components/ui/sonner"
@@ -32,7 +33,8 @@ function App() {
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/dashboard/settings" element={<SettingsPage />} />
-            {/* Future routes: /dashboard/products, /dashboard/expenses */}
+            <Route path="/dashboard/products" element={<ProductsPage />} />
+            {/* Future routes: /dashboard/expenses */}
           </Route>
         </Route>
       </Routes>

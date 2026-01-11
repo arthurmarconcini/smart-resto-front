@@ -42,3 +42,12 @@ export interface Revenue {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
