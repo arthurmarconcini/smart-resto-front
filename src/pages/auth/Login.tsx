@@ -48,7 +48,7 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Aceder ao Dashboard</CardTitle>
+          <CardTitle className="text-2xl font-bold">Acessar o Dashboard</CardTitle>
           <CardDescription>
             Faça login para acompanhar suas vendas em tempo real
           </CardDescription>
@@ -94,7 +94,7 @@ export function LoginPage() {
             <p className="text-slate-500">
               Não tem conta?{" "}
               <Link to="/register" className="text-primary hover:underline font-medium">
-                Registar empresa
+                Cadastrar empresa
               </Link>
             </p>
           </div>

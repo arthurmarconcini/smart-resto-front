@@ -19,11 +19,13 @@ interface AuthState {
   setToken: (token: string) => void
   logout: () => void
   refreshProfile: () => Promise<void>
+  updateCompany: (companyData: Partial<Company>) => void
+  isCompanyConfigured: () => boolean
 }
 
 export const useAuth = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       company: null,
       token: null,
@@ -41,6 +43,17 @@ export const useAuth = create<AuthState>()(
             set({ user: null, company: null, token: null, isAuthenticated: false })
           }
         }
+      },
+      updateCompany: (companyData) =>
+        set((state) => ({
+          company: state.company ? { ...state.company, ...companyData } : null,
+        })),
+      isCompanyConfigured: () => {
+        const company = get().company
+        if (!company) return false
+        return (
+          (company.monthlyFixedCost ?? 0) > 0 && (company.desiredProfit ?? 0) > 0
+        )
       },
     }),
     {

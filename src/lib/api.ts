@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuth } from '@/store/auth-store'
 
 export const api = axios.create({
-  baseURL: 'https://smart-resto-api.onrender.com',
+  baseURL: import.meta.env.VITE_API_URL || 'https://smart-resto-api.onrender.com',
 })
 
 api.interceptors.request.use((config) => {

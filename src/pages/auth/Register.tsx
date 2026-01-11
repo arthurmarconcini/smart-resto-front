@@ -124,7 +124,7 @@ export function RegisterPage() {
               />
 
               <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Criando conta..." : "Registar Empresa"}
+                {form.formState.isSubmitting ? "Criando conta..." : "Cadastrar Empresa"}
               </Button>
             </form>
           </Form>

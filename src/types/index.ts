@@ -2,6 +2,11 @@ export interface Company {
   id: string;
   name: string;
   cnpj?: string;
+  monthlyFixedCost?: number;
+  defaultTaxRate?: number;
+  defaultCardFee?: number;
+  desiredProfit?: number;
+  targetProfitValue?: number;
   createdAt: string;
   updatedAt: string;
 }
