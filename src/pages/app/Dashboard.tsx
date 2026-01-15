@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { format, addDays, isBefore, parseISO } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { format, addDays, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   BarChart,
@@ -20,7 +21,8 @@ import {
 } from "lucide-react";
 
 import { api } from "@/lib/api";
-import type { Company, Expense, Revenue } from "@/types";
+import type { Company, Revenue } from "@/types";
+import { ExpenseStatus, type Expense } from "@/types/finance";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -36,6 +38,7 @@ import { SetupBanner } from "@/components/app/SetupBanner";
 import { toast } from "sonner";
 
 export function DashboardPage() {
+  const navigate = useNavigate(); // Hook
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<Company | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -92,18 +95,18 @@ export function DashboardPage() {
   const urgentExpenses = expenses
     .filter(e => {
       // Filtra apenas pendentes
-      if (e.status !== 'PENDING') return false;
+      if (e.status !== ExpenseStatus.PENDING) return false;
 
-      const dateStr = e.dueDate || e.date;
+      const dateStr = e.dueDate;
       if (!dateStr) return false;
 
-      const dueDate = parseISO(dateStr);
+      const dueDate = new Date(dateStr) // or parseISO if string, Types say string.
       // Verifica se está no passado (vencida) ou nos próximos 7 dias
       return isBefore(dueDate, next7Days);
     })
     .sort((a, b) => {
-      const dateA = new Date(a.dueDate || a.date).getTime();
-      const dateB = new Date(b.dueDate || b.date).getTime();
+      const dateA = new Date(a.dueDate).getTime();
+      const dateB = new Date(b.dueDate).getTime();
       return dateA - dateB;
     })
     .slice(0, 3); // Top 3
@@ -112,7 +115,7 @@ export function DashboardPage() {
 
   // 3. DRE (Dados do Gráfico)
   const currentMonthExpenses = expenses.filter(e => {
-    const expenseDate = parseISO(e.date);
+    const expenseDate = new Date(e.dueDate);
     const now = new Date();
     return expenseDate.getMonth() === now.getMonth() &&
       expenseDate.getFullYear() === now.getFullYear();
@@ -280,8 +283,8 @@ export function DashboardPage() {
                         <TableCell className="font-medium">{expense.description}</TableCell>
                         <TableCell>
                           {expense.dueDate
-                            ? format(parseISO(expense.dueDate), "dd/MM/yyyy")
-                            : format(parseISO(expense.date), "dd/MM/yyyy")
+                            ? format(new Date(expense.dueDate), "dd/MM/yyyy")
+                            : "-"
                           }
                         </TableCell>
                         <TableCell className="text-right font-semibold">
@@ -300,7 +303,7 @@ export function DashboardPage() {
               )}
               {urgentExpenses.length > 0 && (
                 <div className="mt-4 text-center">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => window.location.href = '/expenses'}>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => navigate('/dashboard/expenses')}>
                     Ver todas as despesas
                     <ArrowUpRight className="ml-1 h-3 w-3" />
                   </Button>
