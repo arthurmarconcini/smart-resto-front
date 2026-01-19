@@ -42,6 +42,7 @@ import { toast } from "sonner"
 import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/hooks/useFinance"
 import { ExpenseTable } from "./components/ExpenseTable"
 import { ExpenseForm } from "./components/ExpenseForm"
+import { FinanceForecastCard } from "./components/FinanceForecastCard"
 import { ExpenseStatus, type Expense, type CreateExpenseInput } from "@/types/finance"
 
 const MONTHS = [
@@ -101,18 +102,19 @@ export function FinancePage() {
   const summary = useMemo(() => {
     const today = startOfDay(new Date())
     return filteredExpenses.reduce((acc, expense) => {
+      const amount = Number(expense.amount) || 0;
       // Pending
       if (expense.status === ExpenseStatus.PENDING) {
         // Check overdue
         if (isBefore(startOfDay(new Date(expense.dueDate)), today)) {
-          acc.overdue += expense.amount
+          acc.overdue += amount
         } else {
-          acc.pending += expense.amount
+          acc.pending += amount
         }
       } 
       // Paid
       else if (expense.status === ExpenseStatus.PAID) {
-        acc.paid += expense.amount
+        acc.paid += amount
       }
       return acc
     }, { pending: 0, paid: 0, overdue: 0 })
@@ -191,6 +193,9 @@ export function FinancePage() {
           <Plus className="mr-2 h-4 w-4" /> Nova Despesa
         </Button>
       </div>
+
+      {/* Forecast Card */}
+      <FinanceForecastCard month={selectedMonth} year={selectedYear} />
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">

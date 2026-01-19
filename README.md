@@ -27,9 +27,11 @@ This project is built using a modern, performance-oriented stack:
 
 - **Expense Tracking**: Log and categorize operational expenses.
 - **Forecasting**: View projected costs and revenue.
-- **Transactions Management**: Detailed list of all financial movements.
-- **Smart Forms**: automated handling of installments and intervals.
+- **Transaction Management**: Detailed list of all financial movements.
+- **Smart Forms**: Automated handling of installments and intervals.
 - **Visual Reports**: Charts for monthly expenses vs. revenue.
+- **Break-even Analysis**: Real-time progress bar tracking fixed costs coverage.
+- **Daily Sales Targets**: Dynamic calculation of daily revenue needed to meet monthly obligations.
 
 ### 📦 Product Management
 

@@ -100,7 +100,7 @@ export function DashboardPage() {
       const dateStr = e.dueDate;
       if (!dateStr) return false;
 
-      const dueDate = new Date(dateStr) // or parseISO if string, Types say string.
+      const dueDate = new Date(dateStr)
       // Verifica se está no passado (vencida) ou nos próximos 7 dias
       return isBefore(dueDate, next7Days);
     })

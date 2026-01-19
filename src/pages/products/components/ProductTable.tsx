@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/pagination";
 import { MoreHorizontal, Edit, Trash2, AlertCircle } from "lucide-react";
 import type { Product, GetProductsResponse } from "@/types/product";
+import { PRODUCT_UNIT_LABELS } from "@/lib/constants";
 import { useCategories } from "@/hooks/useCategories";
 
 // Assuming company target profit is available globally or passed as prop. 
@@ -120,7 +121,7 @@ export function ProductTable({
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-mono text-xs">
-                      {product.unit}
+                      {PRODUCT_UNIT_LABELS[product.unit]}
                     </Badge>
                   </TableCell>
                   <TableCell>

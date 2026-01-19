@@ -1,3 +1,10 @@
+export enum ProductUnit {
+    UN = "UN",
+    KG = "KG",
+    L = "L",
+    PORCAO = "PORCAO"
+}
+
 export interface Product {
     id: string;
     name: string;
@@ -6,7 +13,7 @@ export interface Product {
     salePrice: number;
     markup: number;
     stock: number;
-    unit: 'UN' | 'KG' | 'L';
+    unit: ProductUnit;
     categoryId: string;
     companyId: string;
     createdAt: string;

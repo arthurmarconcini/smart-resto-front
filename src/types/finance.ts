@@ -1,19 +1,15 @@
-export const ExpenseCategory = {
-  FIXED: "FIXED",
-  VARIABLE: "VARIABLE",
-  DEBT: "DEBT",
-  INVESTMENT: "INVESTMENT",
-  TAX: "TAX",
-} as const
+export enum ExpenseCategory {
+  FIXED = "FIXED",      // Custos Fixos (Aluguel)
+  VARIABLE = "VARIABLE",// Variáveis (Insumos)
+  DEBT = "DEBT",        // Dívidas
+  INVESTMENT = "INVESTMENT", // Equipamentos
+  TAX = "TAX"           // Impostos Extras
+}
 
-export type ExpenseCategory = (typeof ExpenseCategory)[keyof typeof ExpenseCategory]
-
-export const ExpenseStatus = {
-  PENDING: "PENDING",
-  PAID: "PAID",
-} as const
-
-export type ExpenseStatus = (typeof ExpenseStatus)[keyof typeof ExpenseStatus]
+export enum ExpenseStatus {
+  PENDING = "PENDING",
+  PAID = "PAID",
+}
 
 export interface Expense {
   id: string

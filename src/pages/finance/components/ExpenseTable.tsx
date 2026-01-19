@@ -18,8 +18,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { type Expense, ExpenseCategory, ExpenseStatus } from "@/types/finance"
+import { EXPENSE_CATEGORY_LABELS } from "@/lib/constants"
 import { format, isBefore, startOfDay } from "date-fns"
-import { MoreHorizontal, Pencil, Trash, CheckCircle } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash, CheckCircle, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ExpenseTableProps {
@@ -52,7 +53,7 @@ export function ExpenseTable({
   onMarkAsPaid,
 }: ExpenseTableProps) {
   
-  const totalAmount = expenses.reduce((acc, expense) => acc + expense.amount, 0)
+  const totalAmount = expenses.reduce((acc, expense) => acc + Number(expense.amount), 0)
   const today = startOfDay(new Date())
 
   const getStatusBadge = (expense: Expense) => {
@@ -102,9 +103,16 @@ export function ExpenseTable({
                   </TableCell>
                   <TableCell>{expense.description}</TableCell>
                   <TableCell>
-                    <Badge variant={CATEGORY_COLORS[expense.category]}>
-                      {expense.category}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                       <Badge variant={CATEGORY_COLORS[expense.category]}>
+                        {EXPENSE_CATEGORY_LABELS[expense.category]}
+                      </Badge>
+                      {expense.category === ExpenseCategory.DEBT && (
+                        <span title="Prioridade de Pagamento" className="flex items-center text-red-600">
+                           <AlertCircle className="h-4 w-4" />
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     {formatCurrency(expense.amount)}

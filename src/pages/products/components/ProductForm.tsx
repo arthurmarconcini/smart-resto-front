@@ -5,7 +5,8 @@ import * as z from "zod";
 import { useAuth } from "@/store/auth-store";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
-import type { Product } from "@/types/product";
+import { ProductUnit, type Product } from "@/types/product";
+import { PRODUCT_UNIT_LABELS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,7 +34,7 @@ const productSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   description: z.string().optional(),
   categoryId: z.string().min(1, "Categoria é obrigatória"),
-  unit: z.enum(["UN", "KG", "L"]), // Simplified for now
+  unit: z.nativeEnum(ProductUnit),
   stock: z.coerce.number().min(0, "Estoque deve ser positivo"),
   costPrice: z.coerce.number().min(0.01, "Custo deve ser maior que 0"),
   salePrice: z.coerce.number().min(0.01, "Preço de venda deve ser maior que 0"),
@@ -63,7 +64,7 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
       name: initialData?.name || "",
       description: initialData?.description || "",
       categoryId: initialData?.categoryId || "",
-      unit: initialData?.unit || "UN",
+      unit: initialData?.unit || ProductUnit.UN,
       stock: initialData?.stock || 0,
       costPrice: initialData?.costPrice || 0,
       salePrice: initialData?.salePrice || 0,
@@ -78,22 +79,27 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
   const { setValue } = form;
 
   // --- Smart Pricing Logic ---
+  // --- Smart Pricing Logic ---
   useEffect(() => {
     if (!company || !costPrice || costPrice <= 0) return;
 
-    const taxRate = (company.defaultTaxRate || 0) / 100;
-    const cardFee = (company.defaultCardFee || 0) / 100;
-    const desiredMargin = (company.desiredProfit || 0) / 100;
+    const tax = (company.defaultTaxRate || 0) / 100;
+    const fee = (company.defaultCardFee || 0) / 100;
+    const margin = (company.desiredProfit || 0) / 100;
     
-    const denominator = 1 - (taxRate + cardFee + desiredMargin);
+    const denominator = 1 - (tax + fee + margin);
     
-    if (denominator <= 0) {
-        const simplePrice = costPrice * (1 + desiredMargin);
-        setValue("salePrice", Number(simplePrice.toFixed(2)));
+    let suggestedPrice = 0;
+    if (denominator > 0) {
+        // Fórmula Smart (Markup Divisor)
+        suggestedPrice = costPrice / denominator;
     } else {
-        const suggestedPrice = costPrice / denominator;
-        setValue("salePrice", Number(suggestedPrice.toFixed(2)));
+        // Fallback de Segurança (Se as taxas somarem > 100%)
+        // IMPORTANTE: Deve somar TODAS as taxas, não apenas a margem
+        suggestedPrice = costPrice * (1 + tax + fee + margin);
     }
+
+    setValue("salePrice", Number(suggestedPrice.toFixed(2)));
 
   }, [costPrice, company, setValue]);
 
@@ -191,9 +197,11 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="UN">Unidade (UN)</SelectItem>
-                      <SelectItem value="KG">Quilo (KG)</SelectItem>
-                      <SelectItem value="L">Litro (L)</SelectItem>
+                      {Object.values(ProductUnit).map((unit) => (
+                        <SelectItem key={unit} value={unit}>
+                          {PRODUCT_UNIT_LABELS[unit]}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -283,22 +291,37 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
             </div>
             
             {/* Profit Card / Feedback */}
+            {/* Profit Card / Feedback */}
             {costPrice > 0 && salePrice > 0 && (
                 <div className={`text-sm p-3 rounded border ${netProfit > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
                     <div className="flex justify-between items-center font-medium">
-                        <span>Lucro Líquido Estimado:</span>
+                        <span>Lucro Líquido Real:</span>
                         <span>
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(netProfit)}
                         </span>
                     </div>
-                    <div className="flex justify-between text-xs mt-1 opacity-90">
-                        <span>Margem Real: {realMargin.toFixed(1)}%</span>
-                        <span>Markup: {realMarkup.toFixed(1)}%</span>
+                    
+                    <div className="flex flex-col gap-1 mt-2 text-xs opacity-90 border-t border-dashed border-gray-300 pt-2">
+                         <div className="flex justify-between">
+                            <span>Impostos e Taxas ({(taxRate * 100 + cardFee * 100).toFixed(1)}%):</span>
+                            <span className="text-red-600">
+                                - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(taxes)}
+                            </span>
+                        </div>
+                         <div className="flex justify-between">
+                            <span>Margem Real:</span>
+                            <span>{realMargin.toFixed(2)}%</span>
+                        </div>
+                         <div className="flex justify-between">
+                            <span>Markup:</span>
+                            <span>{realMarkup.toFixed(2)}%</span>
+                        </div>
                     </div>
+
                     {netProfit <= 0 && (
-                        <div className="flex items-center gap-1 mt-2 text-xs font-bold">
+                        <div className="flex items-center gap-1 mt-2 text-xs font-bold text-red-700">
                             <Info className="h-3 w-3" />
-                            Cuidado: Prejuízo operacional!
+                            Cuidado: Prejuízo operacional! Aumente o preço.
                         </div>
                     )}
                 </div>

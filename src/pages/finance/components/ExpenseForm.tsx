@@ -31,14 +31,15 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { ExpenseCategory, ExpenseStatus, type Expense } from "@/types/finance"
 import type { CreateExpenseInput } from "@/types/finance"
+import { EXPENSE_CATEGORY_LABELS } from "@/lib/constants"
 
 const expenseSchema = z.object({
   description: z.string().min(3, "Descrição deve ter no mínimo 3 caracteres"),
   amount: z.coerce.number().min(0.01, "Valor deve ser maior que 0"),
   dueDate: z.date({ message: "Data de vencimento é obrigatória" }),
   paidAt: z.date().nullable().optional(),
-  status: z.enum(Object.values(ExpenseStatus) as [ExpenseStatus, ...ExpenseStatus[]]),
-  category: z.enum(Object.values(ExpenseCategory) as [ExpenseCategory, ...ExpenseCategory[]]),
+  status: z.nativeEnum(ExpenseStatus),
+  category: z.nativeEnum(ExpenseCategory),
   isInstallment: z.boolean().default(false),
   installments: z.coerce.number().min(1).optional(),
   intervalDays: z.coerce.number().min(1).default(30).optional(),
@@ -75,11 +76,11 @@ interface ExpenseFormProps {
 }
 
 const CATEGORY_DESCRIPTIONS: Record<ExpenseCategory, string> = {
-  [ExpenseCategory.FIXED]: "Aluguel, Salários, Internet",
-  [ExpenseCategory.VARIABLE]: "Reposição de Estoque, Embalagens",
+  [ExpenseCategory.FIXED]: "Custos recorrentes (Aluguel, Salários)",
+  [ExpenseCategory.VARIABLE]: "Reposição de Estoque, Insumos",
   [ExpenseCategory.DEBT]: "Empréstimos, Dívidas Antigas",
-  [ExpenseCategory.INVESTMENT]: "Equipamentos, Reformas",
-  [ExpenseCategory.TAX]: "Impostos, Taxas",
+  [ExpenseCategory.INVESTMENT]: "Equipamentos, Reformas (Capex)",
+  [ExpenseCategory.TAX]: "Impostos, Taxas Extras",
 }
 
 export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormProps) {
@@ -91,15 +92,17 @@ export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormPro
       status: initialData?.status || ExpenseStatus.PENDING,
       category: initialData?.category || undefined,
       isInstallment: initialData?.isRecurring || false,
-      installments: 1, // Not stored in Expense type directly usually, defaulting
-      intervalDays: 30, // Defaulting
+      installments: 1, // Padrão, pois geralmente não é armazenado no tipo Expense
+      intervalDays: 30, // Padrão
       dueDate: initialData?.dueDate ? new Date(initialData.dueDate) : undefined,
       paidAt: initialData?.paidAt ? new Date(initialData.paidAt) : null,
     },
   })
 
-  const status = useWatch({ control: form.control, name: "status" })
-  const isInstallment = useWatch({ control: form.control, name: "isInstallment" })
+  const status = useWatch({ control: form.control, name: "status" }) as ExpenseStatus
+  const isInstallment = useWatch({ control: form.control, name: "isInstallment" }) as boolean
+  const amount = useWatch({ control: form.control, name: "amount" }) as number
+  const installments = useWatch({ control: form.control, name: "installments" }) as number | undefined
 
   function handleSubmit(data: ExpenseFormValues) {
     const payload: CreateExpenseInput = {
@@ -113,7 +116,7 @@ export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormPro
       intervalDays: data.isInstallment ? data.intervalDays : undefined,
     }
     
-    // Ensure paidAt is set if Status is PAID (handled by validation, but safe default)
+    // Garante que paidAt seja definido se o Status for PAGO (validado pelo schema, mas seguro como fallback)
     if (data.status === ExpenseStatus.PAID && !payload.paidAt) {
        payload.paidAt = new Date()
     }
@@ -175,10 +178,10 @@ export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormPro
                   </FormControl>
                   <SelectContent>
                     {Object.values(ExpenseCategory).map((category) => (
-                      <SelectItem key={category} value={category}>
-                        <div className="flex flex-col items-start">
-                          <span className="font-medium">{category}</span>
-                          <span className="text-xs text-muted-foreground">
+                        <SelectItem key={category} value={category}>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{EXPENSE_CATEGORY_LABELS[category]}</span>
+                            <span className="text-xs text-muted-foreground">
                             {CATEGORY_DESCRIPTIONS[category]}
                           </span>
                         </div>
@@ -237,9 +240,9 @@ export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormPro
         <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
           <div className="flex items-center justify-between">
              <div className="space-y-0.5">
-              <FormLabel className="text-base">Módulo de Parcelamento</FormLabel>
+              <FormLabel className="text-base">Despesa Parcelada/Recorrente?</FormLabel>
               <FormDescription>
-                Ative se esta despesa for parcelada ou recorrente.
+                Ative para dividir o valor em parcelas.
               </FormDescription>
             </div>
             <FormField
@@ -287,6 +290,22 @@ export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormPro
                 )}
               />
             </div>
+          )}
+
+          {isInstallment && installments && amount > 0 && (
+             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-md text-sm text-blue-800 dark:text-blue-200">
+                <p className="font-semibold mb-1">Resumo do Impacto:</p>
+                <p>
+                  Isso criará <strong>{installments}</strong> despesas de{" "}
+                  <strong>
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(amount / installments)}
+                  </strong>{" "}
+                  cada.
+                </p>
+                <p className="text-xs mt-1 opacity-80">
+                  Totalizando: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(amount)}
+                </p>
+             </div>
           )}
         </div>
 
