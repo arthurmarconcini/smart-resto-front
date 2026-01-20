@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Receipt, Salad, Settings, LogOut, Menu, ChefHat, Wallet } from "lucide-react";
+import { LayoutDashboard, Receipt, Salad, Settings, LogOut, Menu, ChefHat, Wallet, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { SetupBanner } from "@/components/app/SetupBanner";
@@ -15,6 +15,11 @@ const sidebarItems = [
     title: "Resumo",
     icon: LayoutDashboard,
     href: "/dashboard",
+  },
+  {
+    title: "Vendas",
+    icon: ShoppingBag,
+    href: "/dashboard/sales",
   },
   {
     title: "Produtos",
