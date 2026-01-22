@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { setToken, setUser } = useAuth();
+  const { setToken, setUser, setCompany } = useAuth();
   
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
@@ -30,8 +30,16 @@ export function LoginPage() {
       
       // Update global store (which also persists to localStorage)
       setToken(token);
+      
       if (user) {
-        setUser(user);
+        // Extract nested company if present (new API format)
+        const { company, ...userData } = user;
+        
+        setUser(userData);
+        
+        if (company) {
+          setCompany(company);
+        }
       }
       
       toast.success("Login realizado com sucesso!");

@@ -8,6 +8,7 @@ export interface User {
   name: string
   email: string
   companyId: string
+  company?: Company
 }
 
 interface AuthState {
@@ -16,6 +17,7 @@ interface AuthState {
   token: string | null
   isAuthenticated: boolean
   setUser: (user: User) => void
+  setCompany: (company: Company) => void
   setToken: (token: string) => void
   logout: () => void
   refreshProfile: () => Promise<void>
@@ -31,6 +33,7 @@ export const useAuth = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       setUser: (user) => set({ user, isAuthenticated: true }),
+      setCompany: (company) => set({ company }),
       setToken: (token) => set({ token, isAuthenticated: !!token }),
       logout: () => set({ user: null, company: null, token: null, isAuthenticated: false }),
       refreshProfile: async () => {
@@ -46,7 +49,7 @@ export const useAuth = create<AuthState>()(
       },
       updateCompany: (companyData) =>
         set((state) => ({
-          company: state.company ? { ...state.company, ...companyData } : null,
+          company: state.company ? { ...state.company, ...companyData } : (companyData as Company),
         })),
       isCompanyConfigured: () => {
         const company = get().company

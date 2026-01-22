@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { FinanceForecastCard } from "@/pages/finance/components/FinanceForecastCard";
 import { useFinanceForecast } from "@/hooks/useFinance";
 import { useSales } from "@/hooks/useSales";
+import { SalesHistoryChart } from "./components/SalesHistoryChart";
 
 export function DashboardPage() {
   const navigate = useNavigate(); // Hook
@@ -206,6 +207,9 @@ export function DashboardPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+
+          {/* Histórico de Vendas */}
+          <SalesHistoryChart />
 
           {/* Card Previsão de Caixa (Alertas) */}
           <Card className="shadow-sm md:col-span-2 lg:col-span-3 border-l-4 border-l-blue-500">

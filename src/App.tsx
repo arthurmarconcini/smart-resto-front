@@ -14,13 +14,13 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { useAuth } from '@/store/auth-store'
 
 function App() {
-  const { user, token, refreshProfile } = useAuth()
+  const { user, company, token, refreshProfile } = useAuth()
 
   useEffect(() => {
-    if (token && !user) {
+    if (token && (!user || !company)) {
       refreshProfile()
     }
-  }, [token, user, refreshProfile])
+  }, [token, user, company, refreshProfile])
 
   return (
     <BrowserRouter>
