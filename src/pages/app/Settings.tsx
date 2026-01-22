@@ -278,7 +278,7 @@ export function SettingsPage() {
                           />
                         </div>
                       </FormControl>
-                      <FormDescription>Margem de lucro poritem</FormDescription>
+                      <FormDescription>Margem de lucro por item</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

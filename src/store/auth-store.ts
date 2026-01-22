@@ -54,7 +54,9 @@ export const useAuth = create<AuthState>()(
       isCompanyConfigured: () => {
         const company = get().company
         if (!company) return false
-        return company.isConfigured
+        // Check if essential financial settings are configured
+        // We consider it configured if at least the macro costs or target profit are set
+        return (Number(company.monthlyFixedCost) > 0 || Number(company.targetProfitValue) > 0)
       },
     }),
     {
