@@ -51,9 +51,7 @@ export const useAuth = create<AuthState>()(
       isCompanyConfigured: () => {
         const company = get().company
         if (!company) return false
-        return (
-          (company.monthlyFixedCost ?? 0) > 0 && (company.desiredProfit ?? 0) > 0
-        )
+        return company.isConfigured
       },
     }),
     {

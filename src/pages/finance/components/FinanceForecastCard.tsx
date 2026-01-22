@@ -1,49 +1,70 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { useAuth } from "@/store/auth-store"
-import { useExpenses } from "@/hooks/useFinance"
-import { ExpenseStatus } from "@/types/finance"
-import { Target, TrendingUp, DollarSign } from "lucide-react"
+import { useFinanceForecast } from "@/hooks/useFinance"
+import { useSales } from "@/hooks/useSales"
+import { Target, TrendingUp, DollarSign, Info } from "lucide-react"
 import { differenceInCalendarDays, endOfMonth, startOfToday } from "date-fns"
+
 
 interface FinanceForecastCardProps {
   month: number
   year: number
 }
 
+// Simple internal tooltip wrapper in case the project doesn't have the UI component yet, 
+// using crude title attribute as backup if needed, but trying to be clean.
+// Actually, since I didn't find the Tooltip component in the search, I'll use a standard browser title on an icon 
+// to avoid import errors if the file doesn't exist. 
+// User said "Se possível", so I will use a simple implementation.
+
 export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
-  const { company } = useAuth()
+  const { data: forecast, isLoading: isLoadingForecast } = useFinanceForecast(month + 1, year)
   
-  // Busca apenas despesas PENDENTES para o cálculo relativo ao que falta pagar
-  const { data: expenses = [] } = useExpenses({
-    month: month + 1, // API espera 1-12
-    year: year,
-    status: ExpenseStatus.PENDING
-  })
+  // Voltamos a usar o useSales para garantir que a receita seja exibida corretamente
+  // caso o backend ainda não esteja enviando o currentStats atualizado.
+  const { data: sales, isLoading: isLoadingSales } = useSales({ month: month + 1, year })
 
-  // Calcula Totais
-  const monthlyFixedCost = Number(company?.monthlyFixedCost || 0)
-  const totalPendingVariable = expenses.reduce((acc, curr) => acc + Number(curr.amount), 0)
-  
-  const totalExpensesTarget = monthlyFixedCost + totalPendingVariable
-  
-  // Receita (Pode ser integrada futuramente)
-  const currentRevenue = 0 
-  
-  // Cálculos
-  const breakEvenProgress = totalExpensesTarget > 0 ? (currentRevenue / totalExpensesTarget) * 100 : 0
-  
-  const today = startOfToday()
-  const lastDayOfMonth = endOfMonth(new Date(year, month))
-  
-  const daysRemaining = differenceInCalendarDays(lastDayOfMonth, today)
-  const actualDaysRemaining = daysRemaining > 0 ? daysRemaining : 1 // Prevent division by zero
-  
-  const remainingToTarget = Math.max(0, totalExpensesTarget - currentRevenue)
-  const dailyTarget = remainingToTarget / actualDaysRemaining
+  const isLoading = isLoadingForecast || isLoadingSales
 
+  // Fallback seguro se os dados ainda não chegaram
+  const breakDown = forecast?.breakDown
+  const targets = forecast?.targets
+  
+  if (isLoading || !breakDown || !targets || !sales) {
+    return (
+        <Card className="border-l-4 border-l-blue-500 shadow-sm animate-pulse">
+            <CardHeader className="pb-2">
+                <div className="h-6 w-1/3 bg-slate-200 rounded" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="h-4 w-full bg-slate-200 rounded" />
+                <div className="h-2 w-full bg-slate-200 rounded" />
+            </CardContent>
+        </Card>
+    )
+  }
+
+  // Dados da API + Calculo Local de Vendas (Híbrido Frontend/Backend)
+  // Se o backend mandar currentStats, podemos usar, mas por garantia somamos o sales localmente agora.
+  const totalRevenue = sales.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+  
+  const breakEvenRevenue = targets.breakEvenRevenue || 0
+  const breakEvenProgress = breakEvenRevenue > 0 ? (totalRevenue / breakEvenRevenue) * 100 : 0
+  
+  // Formatadores
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
+
+  // Dados de dias
+  const today = startOfToday()
+  const lastDayOfMonth = endOfMonth(new Date(year, month))
+  const daysRemaining = differenceInCalendarDays(lastDayOfMonth, today)
+  const actualDaysRemaining = daysRemaining > 0 ? daysRemaining : 1
+
+  // Recalculo da Meta Diária (Frontend) para garantir consistência com a Receita Atual
+  // Meta Diária = (MetaTotal - JáFaturado) / DiasRestantes
+  const leftToPay = Math.max(0, breakEvenRevenue - totalRevenue)
+  const dailyTarget = leftToPay / actualDaysRemaining
 
   return (
     <Card className="border-l-4 border-l-blue-500 shadow-sm">
@@ -51,22 +72,38 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
         <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Target className="h-5 w-5 text-blue-500" />
-                Previsão Financeira (Mês Atual)
+                Previsão Detalhada
             </CardTitle>
              <DollarSign className="h-4 w-4 text-muted-foreground" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {/* Break-even Progress */}
         <div className="space-y-2">
            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Progresso do Mês (Meta: {formatCurrency(totalExpensesTarget)})</span>
+              <span className="text-muted-foreground">
+                  Cobertura de Custos (Rev: <span className="text-foreground font-medium">{formatCurrency(totalRevenue)}</span>)
+              </span>
               <span className="font-medium">{Math.round(breakEvenProgress)}%</span>
            </div>
+           
            <Progress value={breakEvenProgress} className="h-2" />
-           <p className="text-xs text-muted-foreground">
-             Baseado em Custos Fixos ({formatCurrency(monthlyFixedCost)}) + Pendentes ({formatCurrency(totalPendingVariable)})
-           </p>
+           
+           <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1">
+             <span>Meta Baseada em:</span>
+             
+             {/* Fixos com Tooltip Nativo */}
+             <div className="flex items-center gap-1 font-medium cursor-help" title={`Base: ${formatCurrency(breakDown.genericFixedCost)} + Lançados: ${formatCurrency(breakDown.detailedFixedCost)}`}>
+                Fixos ({formatCurrency(breakDown.totalFixedCost)})
+                <Info className="h-3 w-3" />
+             </div>
+             
+             <span>+</span>
+             
+             <span className="font-medium">
+                Operacionais/Variáveis ({formatCurrency(breakDown.variableExpenses)})
+             </span>
+           </div>
         </div>
 
         {/* Daily Target */}
@@ -75,12 +112,12 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
                 <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-                <p className="text-sm text-muted-foreground">Meta Diária de Vendas</p>
+                <p className="text-sm text-muted-foreground">Meta Diária Necessária</p>
                 <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
                     {formatCurrency(dailyTarget)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                    Para cobrir despesas nos próximos {actualDaysRemaining} dias
+                    Para pagar todas as contas nos próximos {actualDaysRemaining} dias
                 </p>
             </div>
         </div>
@@ -88,3 +125,4 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
     </Card>
   )
 }
+

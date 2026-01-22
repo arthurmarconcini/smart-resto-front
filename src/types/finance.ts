@@ -48,17 +48,21 @@ export interface UpdateExpenseInput {
 }
 
 export interface FinanceForecast {
-  summary: {
-    fixedCost: number
-    variableExpenses: number
-    totalDebts: number
-    targetProfit: number
-  }
+  breakDown: {
+    genericFixedCost: number;   // Config da Empresa
+    detailedFixedCost: number;  // Fixos PAGOS
+    totalFixedCost: number;     // Soma (Híbrida)
+    variableExpenses: number;   // Catch-All (Variáveis + Dívidas + Fixos Pendentes)
+    targetProfit: number;
+  };
   targets: {
-    breakEvenRevenue: number
-    goalRevenue: number
-    dailyTarget: number
-  }
+    breakEvenRevenue: number;   // Total Necessário (Custos Totais)
+    goalRevenue: number;        // Meta com Lucro
+    dailyTarget: number;        // Meta por dia restante
+  };
+  currentStats?: {
+    totalRevenue: number;
+  };
 }
 
 export interface ExpenseFilters {

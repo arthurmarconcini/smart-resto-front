@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/store/auth-store";
 import { api } from "@/lib/api";
+import type { Company } from "@/types";
 import {
   Banknote,
   Calculator,
@@ -86,9 +87,9 @@ export function SettingsPage() {
 
   async function onSubmit(data: SettingsFormValues) {
     try {
-      await api.put("/companies/settings", data);
+      const { data: updatedCompany } = await api.put<Company>("/companies/settings", data);
 
-      updateCompany(data);
+      updateCompany(updatedCompany);
       toast.success("Configurações salvas com sucesso!");
 
       // If it was the first setup, redirect to dashboard
@@ -97,7 +98,9 @@ export function SettingsPage() {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar configurações. Tente novamente.");
+      const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage = apiError.response?.data?.message || apiError.message || "Erro desconhecido";
+      toast.error(`Erro ao salvar: ${errorMessage}`);
     }
   }
 
@@ -133,7 +136,7 @@ export function SettingsPage() {
                 name="monthlyFixedCost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base">Custo Fixo Mensal (R$)</FormLabel>
+                    <FormLabel className="text-base">Custo Fixo Base (Estático)</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Banknote className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -149,7 +152,7 @@ export function SettingsPage() {
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Soma de aluguel, luz, água, folha, etc.
+                      Informe aqui apenas os custos invariáveis (ex: Aluguel) que você NÃO pretende lançar manualmente todo mês na tela de Financeiro. Este valor será somado às despesas fixas lançadas.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

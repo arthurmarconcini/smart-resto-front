@@ -8,6 +8,7 @@ export interface Company {
   desiredProfit?: number;
   targetProfitValue?: number;
   createdAt: string;
+  isConfigured: boolean;
   updatedAt: string;
 }
 

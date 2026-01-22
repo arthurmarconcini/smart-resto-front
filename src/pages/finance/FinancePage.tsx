@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 
-import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/hooks/useFinance"
+import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense, usePayExpense } from "@/hooks/useFinance"
 import { ExpenseTable } from "./components/ExpenseTable"
 import { ExpenseForm } from "./components/ExpenseForm"
 import { FinanceForecastCard } from "./components/FinanceForecastCard"
@@ -73,6 +73,7 @@ export function FinancePage() {
   const createMutation = useCreateExpense()
   const updateMutation = useUpdateExpense()
   const deleteMutation = useDeleteExpense()
+  const payExpenseMutation = usePayExpense()
 
   // Computed Values
   const filteredExpenses = useMemo(() => {
@@ -168,12 +169,9 @@ export function FinancePage() {
 
   const handleMarkAsPaid = async (expense: Expense) => {
     try {
-      await updateMutation.mutateAsync({
+      await payExpenseMutation.mutateAsync({
         id: expense.id,
-        data: {
-          status: ExpenseStatus.PAID,
-          paidAt: new Date()
-        }
+        paidAt: new Date()
       })
       toast.success("Despesa marcada como paga!")
     } catch {

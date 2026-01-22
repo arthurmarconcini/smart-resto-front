@@ -88,3 +88,16 @@ export function useDeleteExpense() {
     },
   })
 }
+
+export function usePayExpense() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, paidAt }: { id: string; paidAt?: Date }) => {
+      await api.patch(`/finance/expenses/${id}/pay`, { paidAt })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.all })
+    },
+  })
+}

@@ -6,6 +6,8 @@ import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertTriangle } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -100,6 +102,7 @@ export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormPro
   })
 
   const status = useWatch({ control: form.control, name: "status" }) as ExpenseStatus
+  const category = useWatch({ control: form.control, name: "category" }) as ExpenseCategory
   const isInstallment = useWatch({ control: form.control, name: "isInstallment" }) as boolean
   const amount = useWatch({ control: form.control, name: "amount" }) as number
   const installments = useWatch({ control: form.control, name: "installments" }) as number | undefined
@@ -236,6 +239,16 @@ export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormPro
             )}
           />
         </div>
+
+        {category === ExpenseCategory.FIXED && (
+          <Alert variant="warning">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Atenção</AlertTitle>
+            <AlertDescription>
+              Certifique-se de que este valor não está duplicado no 'Custo Fixo Base' nas configurações da empresa.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
           <div className="flex items-center justify-between">

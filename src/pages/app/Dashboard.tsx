@@ -10,21 +10,19 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell
+  Cell,
+  ReferenceLine
 } from "recharts";
 import {
   AlertTriangle,
   ArrowUpRight,
   Banknote,
   Calendar,
-  TrendingUp,
 } from "lucide-react";
 
 import { api } from "@/lib/api";
-import type { Company, Revenue } from "@/types";
 import { ExpenseStatus, type Expense } from "@/types/finance";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -36,35 +34,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { SetupBanner } from "@/components/app/SetupBanner";
 import { toast } from "sonner";
+import { FinanceForecastCard } from "@/pages/finance/components/FinanceForecastCard";
+import { useFinanceForecast } from "@/hooks/useFinance";
+import { useSales } from "@/hooks/useSales";
 
 export function DashboardPage() {
   const navigate = useNavigate(); // Hook
   const [loading, setLoading] = useState(true);
-  const [company, setCompany] = useState<Company | null>(null);
+  // const [company, setCompany] = useState<Company | null>(null); // Removed
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [revenue, setRevenue] = useState<Revenue | null>(null);
 
   useEffect(() => {
     async function fetchDashboardData() {
       try {
         setLoading(true);
-        const [companyRes, expensesRes, revenueRes] = await Promise.all([
-          api.get<Company>("/auth/me"),
+        const [expensesRes] = await Promise.all([
+          // api.get<Company>("/auth/me"), // Removed
           api.get<Expense[]>("/finance/expenses"),
-          api.get<Revenue[]>("/revenue"),
         ]);
 
-        const companyData = companyRes.data;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setCompany((companyData as any).company || companyData);
+        // const companyData = companyRes.data;
+        // setCompany((companyData as any).company || companyData);
         setExpenses(expensesRes.data || []);
-
-        // Filtra a receita do mês atual
-        const currentMonth = format(new Date(), "yyyy-MM");
-        const revenues = revenueRes.data || [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const currentRevenue = revenues.find((r: any) => r.month === currentMonth) || null;
-        setRevenue(currentRevenue);
 
       } catch (error) {
         console.error("Falha ao carregar dados do dashboard", error);
@@ -77,19 +68,16 @@ export function DashboardPage() {
     fetchDashboardData();
   }, []);
 
-  // --- Cálculos ---
+  // Hook Forecast
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+  const currentYear = today.getFullYear();
+  const { data: forecast } = useFinanceForecast(currentMonth, currentYear);
+  const { data: sales } = useSales({ month: currentMonth, year: currentYear });
 
-  // 1. Ponto de Equilíbrio
-  const monthlyFixedCost = company?.monthlyFixedCost || 0;
-  const totalRevenue = revenue?.totalRevenue || 0;
-  const breakEvenPercentage = monthlyFixedCost > 0
-    ? (totalRevenue / monthlyFixedCost) * 100
-    : 0;
-
-  const isProfit = breakEvenPercentage >= 100;
+  const totalRevenue = sales?.reduce((acc, curr) => acc + Number(curr.totalAmount), 0) || 0;
 
   // 2. Previsão (Despesas Urgentes)
-  const today = new Date();
   const next7Days = addDays(today, 7);
 
   const urgentExpenses = expenses
@@ -113,20 +101,17 @@ export function DashboardPage() {
 
   const totalUrgentValue = urgentExpenses.reduce((acc, curr) => acc + Number(curr.amount), 0);
 
-  // 3. DRE (Dados do Gráfico)
-  const currentMonthExpenses = expenses.filter(e => {
-    const expenseDate = new Date(e.dueDate);
-    const now = new Date();
-    return expenseDate.getMonth() === now.getMonth() &&
-      expenseDate.getFullYear() === now.getFullYear();
-  });
-
-  const totalMonthlyExpenses = currentMonthExpenses.reduce((acc, curr) => acc + Number(curr.amount), 0) + monthlyFixedCost;
+  // 3. DRE (Dados do Gráfico - Usa Forecast API)
+  const totalMonthlyExpenses = (forecast?.breakDown?.totalFixedCost || 0) + (forecast?.breakDown?.variableExpenses || 0);
+  const goalRevenue = forecast?.targets?.goalRevenue || 0;
 
   const chartData = [
     { name: 'Receita', value: totalRevenue, fill: '#10b981' }, // emerald-500
     { name: 'Despesas', value: totalMonthlyExpenses, fill: '#ef4444' }, // red-500
   ];
+
+  // Garante que o gráfico tenha escala para mostrar a meta
+  const maxValue = Math.max(totalRevenue, totalMonthlyExpenses, goalRevenue) * 1.2;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -163,38 +148,12 @@ export function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-          {/* Card Ponto de Equilíbrio */}
-          <Card className={`${isProfit ? 'border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20'} shadow-sm`}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Ponto de Equilíbrio
-              </CardTitle>
-              <CardDescription>Cobrir custos fixos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-3xl font-bold">
-                    {Math.min(100, Math.round(breakEvenPercentage))}%
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    de {formatCurrency(monthlyFixedCost)}
-                  </span>
-                </div>
-                <Progress
-                  value={Math.min(100, breakEvenPercentage)}
-                  className="h-3"
-                />
-                <p className="text-sm text-muted-foreground pt-1">
-                  {isProfit
-                    ? "Parabéns! Você já cobriu seus custos fixos."
-                    : `Faltam ${formatCurrency(monthlyFixedCost - totalRevenue)} para cobrir custos.`
-                  }
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+
+          {/* Card Ponto de Equilíbrio (Refatorado para usar Hook Híbrido) */}
+          <FinanceForecastCard 
+            month={new Date().getMonth()} 
+            year={new Date().getFullYear()} 
+          />
 
           {/* DRE Simplificado (Gráfico) */}
           <Card className="shadow-sm lg:col-span-2">
@@ -213,20 +172,25 @@ export function DashboardPage() {
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
                     Despesas
                   </div>
+                  {goalRevenue > 0 && (
+                     <div className="flex items-center gap-1">
+                        <div className="w-4 h-[2px] bg-blue-500 border-dashed border-t border-blue-500"></div>
+                        <span className="text-blue-500">Meta ({formatCurrency(goalRevenue)})</span>
+                     </div>
+                  )}
                 </div>
               </div>
             </CardHeader>
             <CardContent className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+                <BarChart data={chartData} layout="vertical" margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
-                  <XAxis type="number" hide />
+                  <XAxis type="number" hide domain={[0, maxValue ? maxValue : 'auto']} />
                   <YAxis dataKey="name" type="category" width={80} tickLine={false} axisLine={false} />
                   <Tooltip
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(value: any) => [formatCurrency(Number(value || 0)), undefined]}
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value) => [formatCurrency(Number(value || 0)), undefined]}
                   />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
                     {
@@ -235,6 +199,9 @@ export function DashboardPage() {
                       ))
                     }
                   </Bar>
+                  {goalRevenue > 0 && (
+                    <ReferenceLine x={goalRevenue} stroke="#3b82f6" strokeDasharray="5 5" strokeWidth={2} label={{ position: 'top', value: 'Meta', fill: '#3b82f6', fontSize: 12 }} />
+                  )}
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
