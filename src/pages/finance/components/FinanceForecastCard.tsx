@@ -55,11 +55,28 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 
-  // Dados de dias
+  // Calculate days based on selected month
   const today = startOfToday()
-  const lastDayOfMonth = endOfMonth(new Date(year, month))
-  const daysRemaining = differenceInCalendarDays(lastDayOfMonth, today)
-  const actualDaysRemaining = daysRemaining > 0 ? daysRemaining : 1
+  const selectedDate = new Date(year, month)
+  const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year
+  const isFutureMonth = selectedDate > today
+
+  let actualDaysRemaining = 1
+
+  if (isCurrentMonth) {
+    // Current month: calculate from today to end of month
+    const lastDayOfMonth = endOfMonth(today)
+    const days = differenceInCalendarDays(lastDayOfMonth, today)
+    actualDaysRemaining = days > 0 ? days : 1
+  } else if (isFutureMonth) {
+    // Future month: calculate total days in that month
+    const lastDayOfMonth = endOfMonth(selectedDate)
+    const days = lastDayOfMonth.getDate() // Total days in the month
+    actualDaysRemaining = days
+  } else {
+    // Past month: verify if met (usually 1 just to show total gap if any)
+    actualDaysRemaining = 1
+  }
 
   // Recalculo da Meta Diária (Frontend) para garantir consistência com a Receita Atual
   // Meta Diária = (MetaTotal - JáFaturado) / DiasRestantes
