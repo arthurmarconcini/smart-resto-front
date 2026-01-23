@@ -53,10 +53,10 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Acessar o Dashboard</CardTitle>
+          <CardTitle className="text-2xl font-heading font-bold">Acessar o Dashboard</CardTitle>
           <CardDescription>
             Faça login para acompanhar suas vendas em tempo real
           </CardDescription>
@@ -99,7 +99,7 @@ export function LoginPage() {
           </Form>
 
           <div className="mt-4 text-center text-sm">
-            <p className="text-slate-500">
+            <p className="text-muted-foreground">
               Não tem conta?{" "}
               <Link to="/register" className="text-primary hover:underline font-medium">
                 Cadastrar empresa

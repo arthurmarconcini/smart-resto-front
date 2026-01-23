@@ -45,12 +45,12 @@ interface SidebarContentProps {
 
 function SidebarContent({ pathname, onLinkClick }: SidebarContentProps) {
   return (
-    <div className="flex flex-col h-full bg-slate-900 text-white">
+    <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground">
       <div className="flex items-center gap-2 p-6">
-        <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
-          <ChefHat className="h-5 w-5 text-white" />
+        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+          <ChefHat className="h-5 w-5 text-primary-foreground" />
         </div>
-        <span className="text-xl font-bold bg-linear-to-r from-blue-400 to-emerald-400 text-transparent bg-clip-text">
+        <span className="text-xl font-bold font-heading text-sidebar-foreground">
           Smart Resto
         </span>
       </div>
@@ -61,10 +61,10 @@ function SidebarContent({ pathname, onLinkClick }: SidebarContentProps) {
             to={item.href}
             onClick={onLinkClick}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium",
               pathname === item.href
-                ? "bg-blue-600 text-white"
-                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                ? "bg-sidebar-primary text-sidebar-primary-foreground font-bold shadow-md shadow-yellow-500/20"
+                : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
             <item.icon className="h-5 w-5" />
@@ -72,14 +72,14 @@ function SidebarContent({ pathname, onLinkClick }: SidebarContentProps) {
           </Link>
         ))}
       </div>
-      <div className="p-4 border-t border-slate-800">
-        <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-800/50">
-           <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-             <Wallet className="h-4 w-4 text-emerald-400" />
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center gap-3 p-2 rounded-lg bg-sidebar-accent/50">
+           <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+             <Wallet className="h-4 w-4 text-primary" />
            </div>
            <div>
-             <p className="text-xs text-slate-400">Plano Atual</p>
-             <p className="text-sm font-semibold text-emerald-400">Pro</p>
+             <p className="text-xs text-muted-foreground">Plano Atual</p>
+             <p className="text-sm font-semibold text-primary">Pro</p>
            </div>
         </div>
       </div>
@@ -110,9 +110,9 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block w-64 shrink-0 border-r border-slate-200 dark:border-slate-800">
+      <aside className="hidden md:block w-64 shrink-0 border-r border-border">
         <SidebarContent pathname={location.pathname} />
       </aside>
 
@@ -123,7 +123,7 @@ export function DashboardLayout() {
         </div>
         
         {/* Header */}
-        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-6 flex items-center justify-between">
+        <header className="h-16 border-b border-border bg-background px-4 md:px-6 flex items-center justify-between">
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
@@ -142,16 +142,16 @@ export function DashboardLayout() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <div className="text-right mr-3">
-                <p className="text-sm font-medium text-slate-900 dark:text-white leading-none">
+                <p className="text-sm font-medium text-foreground leading-none">
                   {user?.name || "Usuário"}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {user?.email}
                 </p>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 border border-slate-200 dark:border-slate-700">
+                  <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 border border-border">
                     <Avatar className="h-8 w-8">
                        <AvatarImage src={`https://ui-avatars.com/api/?name=${user?.name}&background=0D8ABC&color=fff`} />
                        <AvatarFallback>CN</AvatarFallback>
@@ -166,7 +166,7 @@ export function DashboardLayout() {
                     <span>Configurações</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={handleLogout} className="text-red-600 focus:text-red-600 dark:text-red-400">
+                  <DropdownMenuItem onSelect={handleLogout} className="text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sair</span>
                   </DropdownMenuItem>
@@ -177,7 +177,7 @@ export function DashboardLayout() {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-4 md:p-6 bg-slate-50 dark:bg-slate-950">
+        <div className="flex-1 overflow-auto p-4 md:p-6 bg-background">
           <Outlet />
         </div>
       </main>

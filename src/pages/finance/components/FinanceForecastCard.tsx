@@ -32,13 +32,13 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
   
   if (isLoading || !breakDown || !targets || !sales) {
     return (
-        <Card className="border-l-4 border-l-blue-500 shadow-sm animate-pulse">
+        <Card className="border-l-4 border-l-primary shadow-sm animate-pulse">
             <CardHeader className="pb-2">
-                <div className="h-6 w-1/3 bg-slate-200 rounded" />
+                <div className="h-6 w-1/3 bg-muted rounded" />
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="h-4 w-full bg-slate-200 rounded" />
-                <div className="h-2 w-full bg-slate-200 rounded" />
+                <div className="h-4 w-full bg-muted rounded" />
+                <div className="h-2 w-full bg-muted rounded" />
             </CardContent>
         </Card>
     )
@@ -84,11 +84,11 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
   const dailyTarget = leftToPay / actualDaysRemaining
 
   return (
-    <Card className="border-l-4 border-l-blue-500 shadow-sm">
+    <Card className="border-l-4 border-l-primary shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <Target className="h-5 w-5 text-blue-500" />
+                <Target className="h-5 w-5 text-primary" />
                 Previsão Detalhada
             </CardTitle>
              <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -125,12 +125,12 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
 
         {/* Daily Target */}
         <div className="pt-2 flex items-center gap-4 bg-muted/20 p-3 rounded-md">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 bg-primary/10 rounded-full">
+                <TrendingUp className="h-5 w-5 text-primary" />
             </div>
             <div>
                 <p className="text-sm text-muted-foreground">Meta Diária Necessária</p>
-                <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                <p className="text-xl font-bold text-primary">
                     {formatCurrency(dailyTarget)}
                 </p>
                 <p className="text-xs text-muted-foreground">

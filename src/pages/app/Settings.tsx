@@ -193,9 +193,9 @@ export function SettingsPage() {
           </Card>
 
           <Card className="shadow-md">
-            <CardHeader className="bg-muted/50 pb-4">
+            <CardHeader className="bg-muted/10 pb-4">
               <div className="flex items-center gap-2 mb-1">
-                <Calculator className="h-5 w-5 text-indigo-500" />
+                <Calculator className="h-5 w-5 text-primary" />
                 <CardTitle className="text-xl">Motor de Precificação (Micro)</CardTitle>
               </div>
               <CardDescription>

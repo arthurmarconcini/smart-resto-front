@@ -306,7 +306,7 @@ export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormPro
           )}
 
           {isInstallment && installments && amount > 0 && (
-             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-md text-sm text-blue-800 dark:text-blue-200">
+             <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-md text-sm text-primary">
                 <p className="font-semibold mb-1">Resumo do Impacto:</p>
                 <p>
                   Isso criará <strong>{installments}</strong> despesas de{" "}

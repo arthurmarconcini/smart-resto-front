@@ -212,23 +212,23 @@ export function FinancePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pago (Mês)</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CheckCircle2 className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(summary.paid)}</div>
+            <div className="text-2xl font-bold text-success">{formatCurrency(summary.paid)}</div>
             <p className="text-xs text-muted-foreground">
               Total liquidado este mês
             </p>
           </CardContent>
         </Card>
-        <Card className={summary.overdue > 0 ? "border-red-200 bg-red-50 dark:bg-red-900/10" : ""}>
+        <Card className={summary.overdue > 0 ? "border-destructive/50 bg-destructive/10" : ""}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-600">Vencido</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium text-destructive">Vencido</CardTitle>
+            <AlertCircle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(summary.overdue)}</div>
-            <p className="text-xs text-red-600/80">
+            <div className="text-2xl font-bold text-destructive">{formatCurrency(summary.overdue)}</div>
+            <p className="text-xs text-destructive/80">
               Atenção! Contas atrasadas.
             </p>
           </CardContent>
@@ -344,7 +344,7 @@ export function FinancePage() {
              <AlertDialogCancel>Cancelar</AlertDialogCancel>
              <AlertDialogAction 
                onClick={handleConfirmDelete}
-               className="bg-red-600 hover:bg-red-700"
+               className="bg-destructive hover:bg-destructive/90"
              >
                {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
              </AlertDialogAction>

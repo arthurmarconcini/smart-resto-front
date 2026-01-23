@@ -61,14 +61,14 @@ export function ExpenseTable({
     const isOverdue = isBefore(dueDate, today) && expense.status === ExpenseStatus.PENDING
 
     if (expense.status === ExpenseStatus.PAID) {
-      return <Badge className="bg-green-600 hover:bg-green-700">Pago</Badge>
+      return <Badge className="bg-success hover:bg-success/90 text-success-foreground">Pago</Badge>
     }
     
     if (isOverdue) {
       return <Badge variant="destructive">Atrasado</Badge>
     }
 
-    return <Badge variant="secondary" className="bg-yellow-500/15 text-yellow-700 hover:bg-yellow-500/25 border-yellow-200">Pendente</Badge>
+    return <Badge variant="secondary" className="bg-warning/15 text-warning hover:bg-warning/25 border-warning/20">Pendente</Badge>
   }
 
   return (
@@ -98,7 +98,7 @@ export function ExpenseTable({
 
               return (
                 <TableRow key={expense.id}>
-                  <TableCell className={cn("font-medium", isOverdue && "text-red-600")}>
+                  <TableCell className={cn("font-medium", isOverdue && "text-destructive")}>
                     {format(new Date(expense.dueDate), "dd/MM/yyyy")}
                   </TableCell>
                   <TableCell>{expense.description}</TableCell>
@@ -108,7 +108,7 @@ export function ExpenseTable({
                         {EXPENSE_CATEGORY_LABELS[expense.category]}
                       </Badge>
                       {expense.category === ExpenseCategory.DEBT && (
-                        <span title="Prioridade de Pagamento" className="flex items-center text-red-600">
+                        <span title="Prioridade de Pagamento" className="flex items-center text-destructive">
                            <AlertCircle className="h-4 w-4" />
                         </span>
                       )}
@@ -144,7 +144,7 @@ export function ExpenseTable({
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => onDelete(expense)}
-                          className="text-red-600 focus:text-red-600"
+                          className="text-destructive focus:text-destructive"
                         >
                           <Trash className="mr-2 h-4 w-4" />
                           Excluir
