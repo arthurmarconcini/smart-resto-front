@@ -1,30 +1,43 @@
 export enum SaleType {
-    DAILY_TOTAL = 'DAILY_TOTAL',
-    ITEMIZED = 'ITEMIZED'
+  DAILY_TOTAL = "DAILY_TOTAL",
+  ITEMIZED = "ITEMIZED",
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  unit: string;
 }
 
 export interface SaleItem {
-    productId: string;
-    quantity: number;
-    unitPrice: number;
+  id: string;
+  saleId: string;
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  subTotal: number;
+  product: Product;
 }
 
 export interface Sale {
-    id: string;
-    date: string;
-    totalAmount: number;
-    type: SaleType;
-    items: SaleItem[];
+  id: string;
+  companyId: string;
+  date: string;
+  totalAmount: number;
+  type: SaleType;
+  createdAt: string;
+  items?: SaleItem[];
 }
 
 export interface CreateSaleItemInput {
-    productId: string;
-    quantity: number;
+  productId: string;
+  quantity: number;
 }
 
 export interface CreateSaleInput {
-    date: string;
-    type: SaleType;
-    totalAmount?: number; // Required if DAILY_TOTAL
-    items?: CreateSaleItemInput[]; // Required if ITEMIZED
+  date: string;
+  type: SaleType;
+  totalAmount?: number;
+  items?: CreateSaleItemInput[];
 }

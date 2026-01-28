@@ -5,13 +5,29 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 import { useCreateSale } from "@/hooks/useSales";
 import { SaleType } from "@/types/sales";
@@ -45,17 +61,9 @@ export function DailySalesForm() {
       },
       {
         onSuccess: () => {
-          toast.success("Sucesso!", {
-            description: "Venda diária registrada com sucesso.",
-          });
           form.reset({
             date: new Date(),
             totalAmount: 0,
-          });
-        },
-        onError: () => {
-          toast.error("Erro", {
-            description: "Ocorreu um erro ao registrar a venda.",
           });
         },
       }

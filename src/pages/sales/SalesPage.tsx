@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Tabs,
   TabsContent,
@@ -11,104 +12,79 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { PointOfSale } from "./components/PointOfSale";
 import { DailySalesForm } from "./components/DailySalesForm";
-import { useSales } from "@/hooks/useSales";
-import { SaleType } from "@/types/sales";
-import { format } from "date-fns";
+import { SalesHistoryTable } from "./components/SalesHistoryTable";
+import { SalesFilters } from "./components/SalesFilters";
+import { TodaySummaryCard } from "./components/TodaySummaryCard";
+import { useSales, salesKeys } from "@/hooks/useSales";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function SalesPage() {
-  const { data: sales, isLoading } = useSales();
+  const today = new Date();
+  const [month, setMonth] = useState(today.getMonth() + 1);
+  const [year, setYear] = useState(today.getFullYear());
+
+  const { data: sales, isLoading, isFetching } = useSales({ month, year });
+  const queryClient = useQueryClient();
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: salesKeys.lists() });
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Registro de Vendas</h2>
-        <p className="text-muted-foreground">
-          Gerencie suas vendas diárias ou lance pedidos individuais.
-        </p>
+      {/* Header */}
+      <div className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-3xl font-heading font-bold tracking-tight">
+            Registro de Vendas
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Gerencie suas vendas diárias ou lance pedidos individuais
+          </p>
+        </div>
+
+        <TodaySummaryCard />
       </div>
 
-      <Tabs defaultValue="daily" className="space-y-4">
+      {/* Tabs */}
+      <Tabs defaultValue="history" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="pos">Venda Detalhada (PDV)</TabsTrigger>
+          <TabsTrigger value="history">Histórico</TabsTrigger>
           <TabsTrigger value="daily">Fechamento Rápido</TabsTrigger>
-          <TabsTrigger value="history">Histórico Recente</TabsTrigger>
+          <TabsTrigger value="pos">Venda Detalhada (PDV)</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pos">
-          <PointOfSale />
+        <TabsContent value="history" className="space-y-4">
+          <SalesFilters
+            month={month}
+            year={year}
+            onMonthChange={setMonth}
+            onYearChange={setYear}
+            onRefresh={handleRefresh}
+            isRefreshing={isFetching}
+          />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Histórico de Vendas</CardTitle>
+              <CardDescription>
+                Visualize e gerencie todas as vendas do período selecionado
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SalesHistoryTable sales={sales || []} isLoading={isLoading} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="daily">
           <DailySalesForm />
         </TabsContent>
 
-        <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Vendas</CardTitle>
-              <CardDescription>
-                Visualize as vendas registradas recentemente.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="py-4 text-center">Carregando...</div>
-              ) : !sales || sales.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  Nenhuma venda registrada neste mês.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead className="text-right">Valor Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sales.map((sale) => (
-                      <TableRow key={sale.id}>
-                        <TableCell>
-                          {format(new Date(sale.date), "dd/MM/yyyy HH:mm")}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              sale.type === SaleType.DAILY_TOTAL
-                                ? "secondary"
-                                : "default"
-                            }
-                          >
-                            {sale.type === SaleType.DAILY_TOTAL
-                              ? "Fechamento Caixa"
-                              : "PDV"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          }).format(sale.totalAmount)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="pos">
+          <PointOfSale />
         </TabsContent>
       </Tabs>
     </div>
