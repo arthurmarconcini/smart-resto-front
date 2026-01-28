@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Receipt, Salad, Settings, LogOut, Menu, ChefHat, Wallet, ShoppingBag } from "lucide-react";
+import { LayoutDashboard, Receipt, Salad, Settings, LogOut, Menu, ChefHat, Wallet, ShoppingBag, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { SetupBanner } from "@/components/app/SetupBanner";
@@ -30,6 +31,12 @@ const sidebarItems = [
     title: "Despesas",
     icon: Receipt,
     href: "/dashboard/expenses",
+  },
+  {
+    title: "Receitas",
+    icon: TrendingUp,
+    href: "/dashboard/revenue",
+    isNew: true,
   },
   {
     title: "Configurações",
@@ -68,7 +75,12 @@ function SidebarContent({ pathname, onLinkClick }: SidebarContentProps) {
             )}
           >
             <item.icon className="h-5 w-5" />
-            {item.title}
+            <span className="flex-1">{item.title}</span>
+            {item.isNew && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                Novo
+              </Badge>
+            )}
           </Link>
         ))}
       </div>
@@ -94,9 +106,8 @@ export function DashboardLayout() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // If authenticated, has user data, but company is not configured
+    // Redireciona para configurações se empresa não estiver configurada
     if (user && !isCompanyConfigured()) {
-      // Allow user to be on the settings page
       if (location.pathname !== "/dashboard/settings") {
         toast.warning("Por favor, finalize a configuração da sua conta.");
         navigate("/dashboard/settings");
@@ -111,18 +122,18 @@ export function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Desktop Sidebar */}
+      {/* Sidebar Desktop */}
       <aside className="hidden md:block w-64 shrink-0 border-r border-border">
         <SidebarContent pathname={location.pathname} />
       </aside>
 
-      {/* Main Content */}
+      {/* Conteúdo Principal */}
       <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
         <div className="px-4 md:px-6 pt-4">
           <SetupBanner />
         </div>
         
-        {/* Header */}
+        {/* Cabeçalho */}
         <header className="h-16 border-b border-border bg-background px-4 md:px-6 flex items-center justify-between">
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -137,7 +148,7 @@ export function DashboardLayout() {
             </Sheet>
           </div>
 
-          <div className="flex-1" /> {/* Spacer */}
+          <div className="flex-1" />
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -176,7 +187,7 @@ export function DashboardLayout() {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Conteúdo da Página */}
         <div className="flex-1 overflow-auto p-4 md:p-6 bg-background">
           <Outlet />
         </div>
