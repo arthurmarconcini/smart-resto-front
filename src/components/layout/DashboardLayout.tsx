@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -11,37 +10,46 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { SetupBanner } from "@/components/app/SetupBanner";
 
+// Itens do menu organizados por categoria
 const sidebarItems = [
+  // 📊 OPERACIONAL
   {
     title: "Resumo",
     icon: LayoutDashboard,
     href: "/dashboard",
-  },
-  {
-    title: "Vendas",
-    icon: ShoppingBag,
-    href: "/dashboard/sales",
+    category: "operacional",
   },
   {
     title: "Produtos",
     icon: Salad,
     href: "/dashboard/products",
+    category: "operacional",
+  },
+  {
+    title: "Vendas",
+    icon: ShoppingBag,
+    href: "/dashboard/sales",
+    category: "operacional",
+  },
+  // 💰 FINANCEIRO
+  {
+    title: "Receitas",
+    icon: TrendingUp,
+    href: "/dashboard/revenue",
+    category: "financeiro",
   },
   {
     title: "Despesas",
     icon: Receipt,
     href: "/dashboard/expenses",
+    category: "financeiro",
   },
-  {
-    title: "Receitas",
-    icon: TrendingUp,
-    href: "/dashboard/revenue",
-    isNew: true,
-  },
+  // ⚙️ SISTEMA
   {
     title: "Configurações",
     icon: Settings,
     href: "/dashboard/settings",
+    category: "sistema",
   },
 ];
 
@@ -62,27 +70,32 @@ function SidebarContent({ pathname, onLinkClick }: SidebarContentProps) {
         </span>
       </div>
       <div className="flex-1 py-4 px-3 space-y-1">
-        {sidebarItems.map((item) => (
-          <Link
-            key={item.href}
-            to={item.href}
-            onClick={onLinkClick}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium",
-              pathname === item.href
-                ? "bg-sidebar-primary text-sidebar-primary-foreground font-bold shadow-md shadow-yellow-500/20"
-                : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            )}
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="flex-1">{item.title}</span>
-            {item.isNew && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-                Novo
-              </Badge>
-            )}
-          </Link>
-        ))}
+        {sidebarItems.map((item, index) => {
+          // Adiciona separador visual entre categorias
+          const prevCategory = index > 0 ? sidebarItems[index - 1].category : null;
+          const showSeparator = prevCategory && prevCategory !== item.category;
+          
+          return (
+            <div key={item.href}>
+              {showSeparator && (
+                <div className="my-3 border-t border-sidebar-border" />
+              )}
+              <Link
+                to={item.href}
+                onClick={onLinkClick}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium",
+                  pathname === item.href
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground font-bold shadow-md shadow-yellow-500/20"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="flex-1">{item.title}</span>
+              </Link>
+            </div>
+          );
+        })}
       </div>
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3 p-2 rounded-lg bg-sidebar-accent/50">

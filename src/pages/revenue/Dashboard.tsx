@@ -16,12 +16,18 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FinanceForecastCard } from "@/pages/finance/components/FinanceForecastCard";
 import {
   useCurrentMonthRevenue,
   useRevenueChart,
-  usePreviousMonthRevenue,
+  getPreviousMonthRevenue,
 } from "@/hooks/useRevenue";
-import { TrendingUp, TrendingDown, DollarSign, RefreshCw } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  RefreshCw,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -62,7 +68,10 @@ function ChartSkeleton() {
 
 /**
  * Dashboard de Receitas
- * Exibe receita do mês atual, comparativo com mês anterior e gráfico de evolução
+ * ✅ Otimizado: 3 requests (vs 7+ antes)
+ * - /revenue/current-month
+ * - /revenue/chart
+ * - /companies/targets
  */
 export function RevenueDashboard() {
   const {
@@ -73,28 +82,27 @@ export function RevenueDashboard() {
   } = useCurrentMonthRevenue();
 
   const {
-    data: previousMonth,
-    isLoading: isLoadingPrevious,
-  } = usePreviousMonthRevenue();
-
-  const {
-    data: chartData,
+    data: chartResult,
     isLoading: isLoadingChart,
     isError: isErrorChart,
-  } = useRevenueChart(6);
+  } = useRevenueChart();
+
+  // Calcular comparativo usando dados do chart (evita request adicional)
+  const previousMonthRevenue = chartResult?.rawData
+    ? getPreviousMonthRevenue(chartResult.rawData)
+    : 0;
 
   const currentValue = currentMonth?.totalRevenue || 0;
-  const previousValue = previousMonth?.totalRevenue || 0;
 
   let percentageChange = 0;
-  if (previousValue > 0) {
-    percentageChange = ((currentValue - previousValue) / previousValue) * 100;
+  if (previousMonthRevenue > 0) {
+    percentageChange = ((currentValue - previousMonthRevenue) / previousMonthRevenue) * 100;
   } else if (currentValue > 0) {
     percentageChange = 100;
   }
 
   const isPositiveChange = percentageChange >= 0;
-  const isLoading = isLoadingCurrent || isLoadingPrevious || isLoadingChart;
+  const isLoading = isLoadingCurrent || isLoadingChart;
 
   if (isLoading) {
     return (
@@ -104,7 +112,8 @@ export function RevenueDashboard() {
             <Skeleton className="h-9 w-64" />
             <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <CardSkeleton />
             <CardSkeleton />
             <CardSkeleton />
           </div>
@@ -123,7 +132,7 @@ export function RevenueDashboard() {
             <h1 className="text-3xl font-heading font-bold tracking-tight text-foreground flex items-center gap-3">
               📊 Dashboard de Receitas
               <Badge variant="secondary" className="text-xs">
-                Novo
+                Otimizado
               </Badge>
             </h1>
             <p className="text-muted-foreground mt-1">
@@ -141,15 +150,16 @@ export function RevenueDashboard() {
           </button>
         </div>
 
-        {/* Cards de Métricas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-primary/20 bg-card">
+        {/* Cards de Métricas - 3 colunas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card: Receita do Mês */}
+          <Card className="border-l-4 border-l-success shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Receita do Mês
               </CardTitle>
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <DollarSign className="h-4 w-4 text-primary" aria-hidden="true" />
+              <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
+                <DollarSign className="h-4 w-4 text-success" aria-hidden="true" />
               </div>
             </CardHeader>
             <CardContent>
@@ -173,7 +183,8 @@ export function RevenueDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card">
+          {/* Card: Comparativo Mensal */}
+          <Card className={`border-l-4 shadow-sm ${isPositiveChange ? "border-l-success" : "border-l-destructive"}`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Comparativo Mensal
@@ -202,14 +213,20 @@ export function RevenueDashboard() {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                vs. mês anterior ({formatCurrency(previousValue)})
+                vs. mês anterior ({formatCurrency(previousMonthRevenue)})
               </p>
             </CardContent>
           </Card>
+
+          {/* Card: Previsão Detalhada - Mesmo do Dashboard Principal */}
+          <FinanceForecastCard 
+            month={new Date().getMonth()} 
+            year={new Date().getFullYear()} 
+          />
         </div>
 
         {/* Gráfico de Evolução */}
-        <Card className="col-span-full">
+        <Card className="col-span-full shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" aria-hidden="true" />
@@ -224,10 +241,10 @@ export function RevenueDashboard() {
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
                 Erro ao carregar gráfico. Tente novamente.
               </div>
-            ) : chartData && chartData.length > 0 ? (
+            ) : chartResult?.chartData && chartResult.chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart
-                  data={chartData}
+                  data={chartResult.chartData}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
                   <defs>

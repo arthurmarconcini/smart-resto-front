@@ -66,7 +66,7 @@ export function SalesPage() {
             isRefreshing={isFetching}
           />
 
-          <Card>
+          <Card className="shadow-sm">
             <CardHeader>
               <CardTitle>Histórico de Vendas</CardTitle>
               <CardDescription>

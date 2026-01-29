@@ -197,7 +197,7 @@ export function FinancePage() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-l-4 border-l-primary shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">A Pagar (Mês)</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -209,7 +209,7 @@ export function FinancePage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-success shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pago (Mês)</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-success" />
@@ -221,7 +221,7 @@ export function FinancePage() {
             </p>
           </CardContent>
         </Card>
-        <Card className={summary.overdue > 0 ? "border-destructive/50 bg-destructive/10" : ""}>
+        <Card className={`border-l-4 shadow-sm ${summary.overdue > 0 ? "border-l-destructive bg-destructive/5" : "border-l-muted"}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-destructive">Vencido</CardTitle>
             <AlertCircle className="h-4 w-4 text-destructive" />
@@ -296,7 +296,7 @@ export function FinancePage() {
       </div>
 
       {/* Main Content */}
-      <Card className="border-none shadow-none md:border md:shadow-sm">
+      <Card className="shadow-sm">
         <CardContent className="p-0 md:p-6">
            {isLoading ? (
              <div className="flex items-center justify-center h-48">

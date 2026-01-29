@@ -109,7 +109,7 @@ export function ProductsPage() {
         </div>
 
         {/* Toolbar / Filters */}
-        <div className="bg-white dark:bg-slate-950 p-4 rounded-lg border shadow-sm flex flex-col sm:flex-row gap-4 items-center">
+        <div className="bg-card p-4 rounded-lg border shadow-sm flex flex-col sm:flex-row gap-4 items-center">
              <div className="relative w-full sm:w-72">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -183,7 +183,7 @@ export function ProductsPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+              <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">
                 Sim, excluir produto
               </AlertDialogAction>
             </AlertDialogFooter>

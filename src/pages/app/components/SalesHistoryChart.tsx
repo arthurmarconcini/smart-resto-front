@@ -24,7 +24,7 @@ export function SalesHistoryChart() {
 
   if (isLoading) {
     return (
-      <Card className="col-span-1 md:col-span-2 lg:col-span-3 shadow-sm border-l-4 border-l-emerald-500 animate-pulse">
+      <Card className="col-span-1 md:col-span-2 lg:col-span-3 shadow-sm border-l-4 border-l-success animate-pulse">
         <CardHeader>
            <div className="h-6 w-1/3 bg-muted rounded" />
            <div className="h-4 w-1/4 bg-muted rounded mt-2" />
@@ -40,7 +40,7 @@ export function SalesHistoryChart() {
   const maxValue = Math.max(...(data.map(d => d.value) || [0])) * 1.1;
 
   return (
-    <Card className="col-span-1 md:col-span-2 lg:col-span-3 shadow-md border-primary/20 bg-card">
+    <Card className="col-span-1 md:col-span-2 lg:col-span-3 shadow-sm border-l-4 border-l-success">
       <CardHeader>
         <div className="flex items-center justify-between">
             <div>

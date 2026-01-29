@@ -30,12 +30,12 @@ export function TodaySummaryCard() {
   );
 
   return (
-    <Card className="border-primary/20 bg-linear-to-br from-primary/5 to-transparent">
+    <Card className="border-l-4 border-l-success shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           Vendas de Hoje
         </CardTitle>
-        <TrendingUp className="h-5 w-5 text-primary" />
+        <TrendingUp className="h-5 w-5 text-success" />
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -54,7 +54,7 @@ export function TodaySummaryCard() {
                 {todaySales.length} venda(s)
               </Badge>
               {todaySales.length > 0 && (
-                <span className="text-xs text-green-600 dark:text-green-400">
+                <span className="text-xs text-success">
                   ● Ativo
                 </span>
               )}
