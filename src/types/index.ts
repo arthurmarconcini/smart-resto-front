@@ -7,6 +7,8 @@ export interface Company {
   defaultCardFee?: number;
   desiredProfit?: number;
   targetProfitValue?: number;
+  manualEmployeeCostEnabled?: boolean;
+  totalEmployeeCost?: number;
   createdAt: string;
   isConfigured: boolean;
   updatedAt: string;

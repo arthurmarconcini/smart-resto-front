@@ -8,6 +8,7 @@ import { ProductsPage } from '@/pages/products/ProductsPage'
 import { FinancePage } from '@/pages/finance/FinancePage'
 import { SalesPage } from '@/pages/sales/SalesPage'
 import { RevenueDashboard } from '@/pages/revenue/Dashboard'
+import { EmployeeCostsPage } from '@/pages/app/EmployeeCosts'
 import { WelcomePage } from '@/pages/Welcome'
 import { PrivateRoute, PublicRoute } from '@/components/RouteGuards'
 import { Toaster } from "@/components/ui/sonner"
@@ -39,6 +40,7 @@ function App() {
             <Route path="/dashboard/products" element={<ProductsPage />} />
             <Route path="/dashboard/sales" element={<SalesPage />} />
             <Route path="/dashboard/expenses" element={<FinancePage />} />
+            <Route path="/dashboard/employee-costs" element={<EmployeeCostsPage />} />
             <Route path="/dashboard/revenue" element={<RevenueDashboard />} />
           </Route>
         </Route>

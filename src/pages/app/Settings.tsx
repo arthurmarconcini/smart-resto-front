@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +34,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { EmployeeCostList } from "@/components/app/employee-cost/EmployeeCostList";
+import { Users2 } from "lucide-react";
 
 const settingsSchema = z.object({
   // Grupo 1: Estrutura de Custos (Macro)
@@ -41,6 +44,7 @@ const settingsSchema = z.object({
     .min(0, "O valor deve ser positivo"),
   targetProfitValue: z.coerce.number()
     .min(0, "O valor deve ser positivo"),
+  manualEmployeeCostEnabled: z.boolean().default(false),
 
   // Grupo 2: Motor de Precificação (Micro)
   defaultTaxRate: z.coerce.number()
@@ -66,10 +70,18 @@ export function SettingsPage() {
     defaultValues: {
       monthlyFixedCost: Number(company?.monthlyFixedCost ?? 0),
       targetProfitValue: Number(company?.targetProfitValue ?? 0),
+      manualEmployeeCostEnabled: company?.manualEmployeeCostEnabled ?? false,
       defaultTaxRate: Number(company?.defaultTaxRate ?? 0),
+
+
       defaultCardFee: Number(company?.defaultCardFee ?? 0),
       desiredProfit: Number(company?.desiredProfit ?? 0),
     },
+  });
+
+  const manualEmployeeCostEnabled = useWatch({
+    control: form.control,
+    name: "manualEmployeeCostEnabled",
   });
 
   // Reset form when company data is loaded/updated
@@ -78,6 +90,7 @@ export function SettingsPage() {
       form.reset({
         monthlyFixedCost: Number(company.monthlyFixedCost ?? 0),
         targetProfitValue: Number(company.targetProfitValue ?? 0),
+        manualEmployeeCostEnabled: company.manualEmployeeCostEnabled ?? false,
         defaultTaxRate: Number(company.defaultTaxRate ?? 0),
         defaultCardFee: Number(company.defaultCardFee ?? 0),
         desiredProfit: Number(company.desiredProfit ?? 0),
@@ -193,6 +206,62 @@ export function SettingsPage() {
           </Card>
 
           <Card className="shadow-md">
+             <CardHeader className="bg-muted/10 pb-4">
+               <div className="flex items-center justify-between">
+                 <div className="space-y-1">
+                   <div className="flex items-center gap-2">
+                     <Users2 className="h-5 w-5 text-blue-500" />
+                     <CardTitle className="text-xl">Custos com Funcionários</CardTitle>
+                   </div>
+                   <CardDescription>
+                     Gerencie as despesas com sua equipe (garçons, cozinha, limpeza).
+                   </CardDescription>
+                 </div>
+                 <FormField
+                   control={form.control}
+                   name="manualEmployeeCostEnabled"
+                   render={({ field }) => (
+                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 bg-background shadow-sm gap-4">
+                       <div className="space-y-0.5">
+                         <FormLabel className="text-base text-nowrap">
+                           Modo Manual
+                         </FormLabel>
+                       </div>
+                       <FormControl>
+                         <Switch
+                           checked={field.value}
+                           onCheckedChange={field.onChange}
+                         />
+                       </FormControl>
+                     </FormItem>
+                   )}
+                 />
+               </div>
+             </CardHeader>
+             <CardContent className="pt-6">
+                {!manualEmployeeCostEnabled ? (
+                   <div className="space-y-4">
+                     <p className="text-sm text-muted-foreground">
+                       Neste modo, o sistema calcula o custo total com base nos funcionários cadastrados abaixo.
+                       Adicione, edite ou remova funcionários para manter seu financeiro preciso.
+                     </p>
+                     <EmployeeCostList />
+                   </div>
+                ) : (
+                  <div className="space-y-4"> 
+                    <p className="text-sm text-muted-foreground bg-yellow-500/10 p-3 rounded-md border border-yellow-500/20">
+                      <strong>Atenção:</strong> No modo manual, você deve lançar o custo total com funcionários como uma <strong>Despesa Fixa</strong> na tela de Financeiro todos os meses. O sistema ignorará o cadastro detalhado de funcionários para cálculos automáticos.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Recomendamos usar o modo automático (desativando o Modo Manual) para ter uma visão mais detalhada e precisa dos seus custos.
+                    </p>
+                  </div>
+                )}
+             </CardContent>
+          </Card>
+
+          
+          <Card className="shadow-md">
             <CardHeader className="bg-muted/10 pb-4">
               <div className="flex items-center gap-2 mb-1">
                 <Calculator className="h-5 w-5 text-primary" />
@@ -287,6 +356,8 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
+
+          
           <div className="flex justify-end pt-4">
             <Button
               type="submit"

@@ -16,6 +16,7 @@ import { useSales } from "@/hooks/useSales";
 import { SalesHistoryChart } from "./components/SalesHistoryChart";
 import { DreChart } from "./components/DreChart";
 import { UrgentExpensesCard } from "./components/UrgentExpensesCard";
+import { CostBreakdownCard } from "./components/CostBreakdownCard";
 
 export function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -49,7 +50,7 @@ export function DashboardPage() {
   const { data: sales } = useSales({ month: currentMonth, year: currentYear });
 
   const totalRevenue = sales?.reduce((acc, curr) => acc + Number(curr.totalAmount), 0) || 0;
-  const totalMonthlyExpenses = (forecast?.breakDown?.totalFixedCost || 0) + (forecast?.breakDown?.variableExpenses || 0);
+  const totalMonthlyExpenses = (forecast?.breakDown?.totalFixedCost || 0) + (forecast?.breakDown?.variableExpenses || 0) + (forecast?.breakDown?.totalEmployeeCost || 0);
   const goalRevenue = forecast?.targets?.goalRevenue || 0;
 
   if (loading) {
@@ -80,6 +81,7 @@ export function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
+
           {/* Card Ponto de Equilíbrio (Refatorado para usar Hook Híbrido) */}
           <FinanceForecastCard 
             month={new Date().getMonth()} 
@@ -91,6 +93,12 @@ export function DashboardPage() {
             totalRevenue={totalRevenue} 
             totalMonthlyExpenses={totalMonthlyExpenses} 
             goalRevenue={goalRevenue} 
+          />
+
+          {/* Breakdown de Custos */}
+          <CostBreakdownCard
+            month={new Date().getMonth()}
+            year={new Date().getFullYear()}
           />
 
           {/* Histórico de Vendas */}

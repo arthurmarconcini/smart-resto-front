@@ -51,6 +51,7 @@ export interface FinanceForecast {
   breakDown: {
     genericFixedCost: number;   // Config da Empresa
     detailedFixedCost: number;  // Fixos PAGOS
+    totalEmployeeCost: number;  // Custos Funcionários
     totalFixedCost: number;     // Soma (Híbrida)
     variableExpenses: number;   // Catch-All (Variáveis + Dívidas + Fixos Pendentes)
     targetProfit: number;

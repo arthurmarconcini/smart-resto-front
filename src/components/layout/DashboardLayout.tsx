@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Receipt, Salad, Settings, LogOut, Menu, ChefHat, Wallet, ShoppingBag, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Receipt, Salad, Settings, LogOut, Menu, ChefHat, Wallet, ShoppingBag, TrendingUp, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { SetupBanner } from "@/components/app/SetupBanner";
@@ -44,6 +44,13 @@ const sidebarItems = [
     href: "/dashboard/expenses",
     category: "financeiro",
   },
+  {
+    title: "Funcionários",
+    icon: Users,
+    href: "/dashboard/employee-costs",
+    category: "financeiro",
+    requiredFeature: "manualEmployeeCostEnabled",
+  },
   // ⚙️ SISTEMA
   {
     title: "Configurações",
@@ -59,6 +66,8 @@ interface SidebarContentProps {
 }
 
 function SidebarContent({ pathname, onLinkClick }: SidebarContentProps) {
+  const { company } = useAuth();
+
   return (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground">
       <div className="flex items-center gap-2 p-6">
@@ -71,6 +80,11 @@ function SidebarContent({ pathname, onLinkClick }: SidebarContentProps) {
       </div>
       <div className="flex-1 py-4 px-3 space-y-1">
         {sidebarItems.map((item, index) => {
+          // Verifica feature flag
+          if (item.requiredFeature && !company?.[item.requiredFeature as keyof typeof company]) {
+            return null;
+          }
+
           // Adiciona separador visual entre categorias
           const prevCategory = index > 0 ? sidebarItems[index - 1].category : null;
           const showSeparator = prevCategory && prevCategory !== item.category;

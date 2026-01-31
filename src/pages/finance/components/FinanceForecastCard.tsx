@@ -110,10 +110,28 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
              <span>Meta Baseada em:</span>
              
              {/* Fixos com Tooltip Nativo */}
-             <div className="flex items-center gap-1 font-medium cursor-help" title={`Base: ${formatCurrency(breakDown.genericFixedCost)} + Lançados: ${formatCurrency(breakDown.detailedFixedCost)}`}>
+             {/* Fixos com Tooltip Nativo */}
+             <div className="flex items-center gap-1 font-medium cursor-help" 
+                  title={`
+Base: ${formatCurrency(breakDown.genericFixedCost)} 
++ Lançados: ${formatCurrency(breakDown.detailedFixedCost)}
+${breakDown.totalEmployeeCost > 0 ? `+ Funcionários: ${formatCurrency(breakDown.totalEmployeeCost)}` : ''}
+                  `.trim()}>
                 Fixos ({formatCurrency(breakDown.totalFixedCost)})
                 <Info className="h-3 w-3" />
              </div>
+
+             {breakDown.totalEmployeeCost > 0 && (
+               <>
+                 <span>+</span>
+                 <div 
+                   className="flex items-center gap-1 font-medium text-primary cursor-help" 
+                   title={`${breakDown.totalEmployeeCost > 0 ? 'Custo total com funcionários cadastrados' : ''}`}
+                 >
+                   💼 Funcionários ({formatCurrency(breakDown.totalEmployeeCost)})
+                 </div>
+               </>
+             )}
              
              <span>+</span>
              
