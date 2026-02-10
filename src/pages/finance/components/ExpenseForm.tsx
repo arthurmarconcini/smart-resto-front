@@ -82,7 +82,6 @@ const CATEGORY_DESCRIPTIONS: Record<ExpenseCategory, string> = {
   [ExpenseCategory.VARIABLE]: "Reposição de Estoque, Insumos",
   [ExpenseCategory.DEBT]: "Empréstimos, Dívidas Antigas",
   [ExpenseCategory.INVESTMENT]: "Equipamentos, Reformas (Capex)",
-  [ExpenseCategory.TAX]: "Impostos, Taxas Extras",
 }
 
 export function ExpenseForm({ onSubmit, initialData, isLoading }: ExpenseFormProps) {

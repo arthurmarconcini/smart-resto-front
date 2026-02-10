@@ -1,17 +1,13 @@
-import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Calendar,
 } from "lucide-react";
 
-import { api } from "@/lib/api";
-import { type Expense } from "@/types/finance";
 import { Button } from "@/components/ui/button";
 import { SetupBanner } from "@/components/app/SetupBanner";
-import { toast } from "sonner";
 import { FinanceForecastCard } from "@/pages/finance/components/FinanceForecastCard";
-import { useFinanceForecast } from "@/hooks/useFinance";
+import { useFinanceForecast, useExpenses } from "@/hooks/useFinance";
 import { useSales } from "@/hooks/useSales";
 import { SalesHistoryChart } from "./components/SalesHistoryChart";
 import { DreChart } from "./components/DreChart";
@@ -19,42 +15,47 @@ import { UrgentExpensesCard } from "./components/UrgentExpensesCard";
 import { CostBreakdownCard } from "./components/CostBreakdownCard";
 
 export function DashboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-
-  useEffect(() => {
-    async function fetchDashboardData() {
-      try {
-        setLoading(true);
-        const [expensesRes] = await Promise.all([
-          api.get<Expense[]>("/finance/expenses"),
-        ]);
-        setExpenses(expensesRes.data || []);
-
-      } catch (error) {
-        console.error("Falha ao carregar dados do dashboard", error);
-        toast.error("Erro ao carregar dados do dashboard.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchDashboardData();
-  }, []);
-
   // Hook Forecast
   const today = new Date();
   const currentMonth = today.getMonth() + 1;
   const currentYear = today.getFullYear();
-  const { data: forecast } = useFinanceForecast(currentMonth, currentYear);
-  const { data: sales } = useSales({ month: currentMonth, year: currentYear });
 
-  const totalRevenue = sales?.reduce((acc, curr) => acc + Number(curr.totalAmount), 0) || 0;
-  const totalMonthlyExpenses = (forecast?.breakDown?.totalFixedCost || 0) + (forecast?.breakDown?.variableExpenses || 0) + (forecast?.breakDown?.totalEmployeeCost || 0);
+  const { data: forecast, isLoading: forecastLoading, error: forecastError } = useFinanceForecast(currentMonth, currentYear);
+  const { data: sales, isLoading: salesLoading, error: salesError } = useSales({ month: currentMonth, year: currentYear });
+  const { data: expenses = [], isLoading: expensesLoading } = useExpenses({ month: currentMonth, year: currentYear });
+
+  const totalRevenue = Array.isArray(sales)
+    ? sales.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+    : 0;
+
+  const totalMonthlyExpenses = forecast?.breakDown
+    ? (forecast.breakDown.totalFixedCost || 0) + (forecast.breakDown.variableExpenses || 0)
+    : 0;
+
   const goalRevenue = forecast?.targets?.goalRevenue || 0;
 
-  if (loading) {
-    return <div className="p-8 flex items-center justify-center min-h-screen">Carregando dashboard...</div>;
+  if (forecastLoading || salesLoading || expensesLoading) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-screen">
+        <div className="space-y-4 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Carregando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (forecastError || salesError) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-screen">
+        <div className="space-y-4 text-center max-w-md">
+          <p className="text-destructive font-semibold">Erro ao carregar dados</p>
+          <p className="text-sm text-muted-foreground">
+            {forecastError?.message || salesError?.message || 'Tente recarregar a página'}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -84,8 +85,8 @@ export function DashboardPage() {
 
           {/* Card Ponto de Equilíbrio (Refatorado para usar Hook Híbrido) */}
           <FinanceForecastCard 
-            month={new Date().getMonth()} 
-            year={new Date().getFullYear()} 
+            month={currentMonth} 
+            year={currentYear} 
           />
 
           {/* DRE Simplificado (Gráfico) */}
@@ -97,8 +98,8 @@ export function DashboardPage() {
 
           {/* Breakdown de Custos */}
           <CostBreakdownCard
-            month={new Date().getMonth()}
-            year={new Date().getFullYear()}
+            month={currentMonth}
+            year={currentYear}
           />
 
           {/* Histórico de Vendas */}

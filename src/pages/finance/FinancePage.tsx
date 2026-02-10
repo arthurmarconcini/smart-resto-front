@@ -193,7 +193,7 @@ export function FinancePage() {
       </div>
 
       {/* Forecast Card */}
-      <FinanceForecastCard month={selectedMonth} year={selectedYear} />
+      <FinanceForecastCard month={selectedMonth + 1} year={selectedYear} />
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">

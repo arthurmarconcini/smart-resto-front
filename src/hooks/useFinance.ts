@@ -33,11 +33,24 @@ export function useFinanceForecast(month?: number, year?: number) {
   return useQuery({
     queryKey: financeKeys.forecast(month, year),
     queryFn: async () => {
+      console.log('[useFinanceForecast] Requesting:', { month, year });
+
       const { data } = await api.get<FinanceForecast>("/finance/forecast", {
         params: { month, year },
       })
+
+      console.log('[useFinanceForecast] Response:', data);
+
+      // Validar estrutura
+      if (!data.breakDown || !data.targets || !data.fixedCostsBreakdown) {
+        console.error('[useFinanceForecast] Invalid data structure:', data);
+        throw new Error('Estrutura de dados inválida da API');
+      }
+
       return data
     },
+    retry: 1,
+    staleTime: 30000,
   })
 }
 

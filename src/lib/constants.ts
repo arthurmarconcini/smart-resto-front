@@ -6,7 +6,6 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   [ExpenseCategory.VARIABLE]: "Custos Variáveis",
   [ExpenseCategory.DEBT]: "Dívidas/Empréstimos",
   [ExpenseCategory.INVESTMENT]: "Investimentos",
-  [ExpenseCategory.TAX]: "Impostos e Taxas",
 }
 
 export const EXPENSE_STATUS_LABELS: Record<ExpenseStatus, string> = {

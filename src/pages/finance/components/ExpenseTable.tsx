@@ -35,7 +35,6 @@ const CATEGORY_COLORS: Record<ExpenseCategory, "default" | "secondary" | "destru
   [ExpenseCategory.VARIABLE]: "secondary",
   [ExpenseCategory.DEBT]: "destructive",
   [ExpenseCategory.INVESTMENT]: "outline",
-  [ExpenseCategory.TAX]: "secondary", // Reusing secondary or define new variant if needed
 }
 
 // Helper to format currency

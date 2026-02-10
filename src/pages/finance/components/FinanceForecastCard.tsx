@@ -18,19 +18,13 @@ interface FinanceForecastCardProps {
 // User said "Se possível", so I will use a simple implementation.
 
 export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
-  const { data: forecast, isLoading: isLoadingForecast } = useFinanceForecast(month + 1, year)
-  
-  // Voltamos a usar o useSales para garantir que a receita seja exibida corretamente
-  // caso o backend ainda não esteja enviando o currentStats atualizado.
-  const { data: sales, isLoading: isLoadingSales } = useSales({ month: month + 1, year })
+  const { data: forecast, isLoading: isLoadingForecast, error: forecastError } = useFinanceForecast(month, year)
+  const { data: sales, isLoading: isLoadingSales, error: salesError } = useSales({ month, year })
 
   const isLoading = isLoadingForecast || isLoadingSales
+  const hasError = forecastError || salesError
 
-  // Fallback seguro se os dados ainda não chegaram
-  const breakDown = forecast?.breakDown
-  const targets = forecast?.targets
-  
-  if (isLoading || !breakDown || !targets || !sales) {
+  if (isLoading) {
     return (
         <Card className="border-l-4 border-l-primary shadow-sm animate-pulse">
             <CardHeader className="pb-2">
@@ -44,8 +38,46 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
     )
   }
 
+  if (hasError) {
+    return (
+      <Card className="border-l-4 border-l-destructive shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium flex items-center gap-2 text-destructive">
+            <Target className="h-5 w-5" />
+            Erro ao carregar previsão
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {forecastError?.message || salesError?.message || 'Erro desconhecido'}
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!forecast?.breakDown || !forecast?.targets || !Array.isArray(sales)) {
+    return (
+      <Card className="border-l-4 border-l-warning shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <Target className="h-5 w-5 text-warning" />
+            Dados Incompletos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Configure seus dados financeiros para visualizar a previsão
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const breakDown = forecast.breakDown
+  const targets = forecast.targets
+
   // Dados da API + Calculo Local de Vendas (Híbrido Frontend/Backend)
-  // Se o backend mandar currentStats, podemos usar, mas por garantia somamos o sales localmente agora.
   const totalRevenue = sales.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
   
   const breakEvenRevenue = targets.breakEvenRevenue || 0
@@ -57,8 +89,8 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
 
   // Calculate days based on selected month
   const today = startOfToday()
-  const selectedDate = new Date(year, month)
-  const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year
+  const selectedDate = new Date(year, month - 1)
+  const isCurrentMonth = today.getMonth() === (month - 1) && today.getFullYear() === year
   const isFutureMonth = selectedDate > today
 
   let actualDaysRemaining = 1
@@ -107,38 +139,48 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
            <Progress value={breakEvenProgress} className="h-2" />
            
            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1">
-             <span>Meta Baseada em:</span>
-             
-             {/* Fixos com Tooltip Nativo */}
-             {/* Fixos com Tooltip Nativo */}
-             <div className="flex items-center gap-1 font-medium cursor-help" 
-                  title={`
+              <span>Meta Baseada em:</span>
+              
+              {/* Fixos com Tooltip Nativo */}
+              {(() => {
+                const employeeCost = forecast.fixedCostsBreakdown?.employeeCosts ?? breakDown.totalEmployeeCost ?? 0;
+                return (
+                  <div className="flex items-center gap-1 font-medium cursor-help" 
+                       title={`
 Base: ${formatCurrency(breakDown.genericFixedCost)} 
 + Lançados: ${formatCurrency(breakDown.detailedFixedCost)}
-${breakDown.totalEmployeeCost > 0 ? `+ Funcionários: ${formatCurrency(breakDown.totalEmployeeCost)}` : ''}
-                  `.trim()}>
-                Fixos ({formatCurrency(breakDown.totalFixedCost)})
-                <Info className="h-3 w-3" />
-             </div>
+${employeeCost > 0 ? `+ Funcionários: ${formatCurrency(employeeCost)}` : ''}
+                       `.trim()}>
+                    Fixos ({formatCurrency(breakDown.totalFixedCost)})
+                    <Info className="h-3 w-3" />
+                  </div>
+                );
+              })()}
 
-             {breakDown.totalEmployeeCost > 0 && (
-               <>
-                 <span>+</span>
-                 <div 
-                   className="flex items-center gap-1 font-medium text-primary cursor-help" 
-                   title={`${breakDown.totalEmployeeCost > 0 ? 'Custo total com funcionários cadastrados' : ''}`}
-                 >
-                   💼 Funcionários ({formatCurrency(breakDown.totalEmployeeCost)})
-                 </div>
-               </>
-             )}
-             
-             <span>+</span>
-             
-             <span className="font-medium">
-                Operacionais/Variáveis ({formatCurrency(breakDown.variableExpenses)})
-             </span>
-           </div>
+              {(() => {
+                const employeeCost = forecast.fixedCostsBreakdown?.employeeCosts ?? breakDown.totalEmployeeCost ?? 0;
+                if (employeeCost > 0) {
+                  return (
+                    <>
+                      <span>+</span>
+                      <div 
+                        className="flex items-center gap-1 font-medium text-primary cursor-help" 
+                        title={`Custo total com ${forecast.fixedCostsBreakdown?.employees?.length || 0} funcionário(s) cadastrado(s)`}
+                      >
+                        💼 Funcionários ({formatCurrency(employeeCost)})
+                      </div>
+                    </>
+                  );
+                }
+                return null;
+              })()}
+              
+              <span>+</span>
+              
+              <span className="font-medium">
+                 Operacionais/Variáveis ({formatCurrency(breakDown.variableExpenses)})
+              </span>
+            </div>
         </div>
 
         {/* Daily Target */}

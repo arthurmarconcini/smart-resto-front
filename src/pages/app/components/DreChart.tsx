@@ -18,13 +18,33 @@ interface DreChartProps {
 }
 
 export function DreChart({ totalRevenue, totalMonthlyExpenses, goalRevenue }: DreChartProps) {
+  const safeRevenue = Number(totalRevenue) || 0;
+  const safeExpenses = Number(totalMonthlyExpenses) || 0;
+  const safeGoal = Number(goalRevenue) || 0;
+
+  if (safeRevenue === 0 && safeExpenses === 0) {
+    return (
+      <Card className="shadow-sm lg:col-span-2">
+        <CardHeader>
+          <CardTitle>DRE Simplificado</CardTitle>
+          <CardDescription>Nenhum dado disponível para o período</CardDescription>
+        </CardHeader>
+        <CardContent className="h-[200px] flex items-center justify-center">
+          <div className="text-center space-y-2">
+            <p className="text-muted-foreground">Configure suas vendas e despesas</p>
+            <p className="text-sm text-muted-foreground">para visualizar o DRE</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const chartData = [
-    { name: 'Receita', value: totalRevenue, fill: 'var(--color-primary)' }, // Primary (Yellow)
-    { name: 'Despesas', value: totalMonthlyExpenses, fill: 'var(--color-destructive)' }, // Red
+    { name: 'Receita', value: safeRevenue, fill: 'var(--color-primary)' },
+    { name: 'Despesas', value: safeExpenses, fill: 'var(--color-destructive)' },
   ];
 
-  // Garante que o gráfico tenha escala para mostrar a meta
-  const maxValue = Math.max(totalRevenue, totalMonthlyExpenses, goalRevenue) * 1.2;
+  const maxValue = Math.max(safeRevenue, safeExpenses, safeGoal) * 1.2;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -50,10 +70,10 @@ export function DreChart({ totalRevenue, totalMonthlyExpenses, goalRevenue }: Dr
               <div className="w-3 h-3 rounded-full bg-destructive"></div>
               Despesas
             </div>
-            {goalRevenue > 0 && (
+            {safeGoal > 0 && (
               <div className="flex items-center gap-1">
                 <div className="w-4 h-[2px] bg-foreground border-dashed border-t border-foreground"></div>
-                <span className="text-foreground">Meta ({formatCurrency(goalRevenue)})</span>
+                <span className="text-foreground">Meta ({formatCurrency(safeGoal)})</span>
               </div>
             )}
           </div>
@@ -82,8 +102,8 @@ export function DreChart({ totalRevenue, totalMonthlyExpenses, goalRevenue }: Dr
                 ))
               }
             </Bar>
-            {goalRevenue > 0 && (
-              <ReferenceLine x={goalRevenue} stroke="var(--color-foreground)" strokeDasharray="5 5" strokeWidth={2} label={{ position: 'top', value: 'Meta', fill: 'var(--color-foreground)', fontSize: 12 }} />
+            {safeGoal > 0 && (
+              <ReferenceLine x={safeGoal} stroke="var(--color-foreground)" strokeDasharray="5 5" strokeWidth={2} label={{ position: 'top', value: 'Meta', fill: 'var(--color-foreground)', fontSize: 12 }} />
             )}
           </BarChart>
         </ResponsiveContainer>

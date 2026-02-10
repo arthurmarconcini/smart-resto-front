@@ -220,7 +220,7 @@ export function RevenueDashboard() {
 
           {/* Card: Previsão Detalhada - Mesmo do Dashboard Principal */}
           <FinanceForecastCard 
-            month={new Date().getMonth()} 
+            month={new Date().getMonth() + 1} 
             year={new Date().getFullYear()} 
           />
         </div>
