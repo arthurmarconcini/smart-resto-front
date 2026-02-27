@@ -138,21 +138,16 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
            
            <Progress value={breakEvenProgress} className="h-2" />
            
-           <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1">
-              <span>Meta Baseada em:</span>
+            <div className="flex flex-wrap items-center justify-center gap-1 text-xs text-muted-foreground mt-2">
+              <span className="mr-1">Composição:</span>
               
-              {/* Fixos com Tooltip Nativo */}
+              {/* Custo Base */}
               {(() => {
-                const employeeCost = forecast.fixedCostsBreakdown?.employeeCosts ?? breakDown.totalEmployeeCost ?? 0;
+                const baseCost = breakDown.genericFixedCost || 0;
                 return (
-                  <div className="flex items-center gap-1 font-medium cursor-help" 
-                       title={`
-Base: ${formatCurrency(breakDown.genericFixedCost)} 
-+ Lançados: ${formatCurrency(breakDown.detailedFixedCost)}
-${employeeCost > 0 ? `+ Funcionários: ${formatCurrency(employeeCost)}` : ''}
-                       `.trim()}>
-                    Fixos ({formatCurrency(breakDown.totalFixedCost)})
-                    <Info className="h-3 w-3" />
+                  <div className="flex items-center gap-1 font-medium bg-muted/50 px-2 py-0.5 rounded-md cursor-help border border-border/50" 
+                       title={`Custo base de manutenção configurado da empresa`}>
+                    Base ({formatCurrency(baseCost)})
                   </div>
                 );
               })()}
@@ -162,12 +157,12 @@ ${employeeCost > 0 ? `+ Funcionários: ${formatCurrency(employeeCost)}` : ''}
                 if (employeeCost > 0) {
                   return (
                     <>
-                      <span>+</span>
+                      <span className="text-muted-foreground/50">+</span>
                       <div 
-                        className="flex items-center gap-1 font-medium text-primary cursor-help" 
+                        className="flex items-center gap-1 font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-md cursor-help border border-primary/20" 
                         title={`Custo total com ${forecast.fixedCostsBreakdown?.employees?.length || 0} funcionário(s) cadastrado(s)`}
                       >
-                        💼 Funcionários ({formatCurrency(employeeCost)})
+                        👥 Funcionários ({formatCurrency(employeeCost)})
                       </div>
                     </>
                   );
@@ -175,11 +170,19 @@ ${employeeCost > 0 ? `+ Funcionários: ${formatCurrency(employeeCost)}` : ''}
                 return null;
               })()}
               
-              <span>+</span>
+              <span className="text-muted-foreground/50">+</span>
               
-              <span className="font-medium">
-                 Operacionais/Variáveis ({formatCurrency(breakDown.variableExpenses)})
-              </span>
+              {/* Despesas Lançadas (Fixas + Variáveis) */}
+              {(() => {
+                const registeredExpenses = (breakDown.detailedFixedCost || 0) + (breakDown.variableExpenses || 0);
+                return (
+                  <div className="flex items-center gap-1 font-medium bg-destructive/10 text-destructive px-2 py-0.5 rounded-md cursor-help border border-destructive/20"
+                       title={`Soma das contas e despesas lançadas: Fixas (${formatCurrency(breakDown.detailedFixedCost || 0)}) + Variáveis (${formatCurrency(breakDown.variableExpenses || 0)})`}>
+                    Despesas ({formatCurrency(registeredExpenses)})
+                    <Info className="h-3 w-3 opacity-70" />
+                  </div>
+                );
+              })()}
             </div>
         </div>
 

@@ -28,9 +28,9 @@ export function DashboardPage() {
     ? sales.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
     : 0;
 
-  const totalMonthlyExpenses = forecast?.breakDown
-    ? (forecast.breakDown.totalFixedCost || 0) + (forecast.breakDown.variableExpenses || 0)
-    : 0;
+  const baseCost = forecast?.breakDown?.genericFixedCost || 0;
+  const employeeCost = forecast?.fixedCostsBreakdown?.employeeCosts ?? forecast?.breakDown?.totalEmployeeCost ?? 0;
+  const registeredExpenses = (forecast?.breakDown?.detailedFixedCost || 0) + (forecast?.breakDown?.variableExpenses || 0);
 
   const goalRevenue = forecast?.targets?.goalRevenue || 0;
 
@@ -92,7 +92,9 @@ export function DashboardPage() {
           {/* DRE Simplificado (Gráfico) */}
           <DreChart 
             totalRevenue={totalRevenue} 
-            totalMonthlyExpenses={totalMonthlyExpenses} 
+            baseCost={baseCost}
+            employeeCost={employeeCost}
+            registeredExpenses={registeredExpenses} 
             goalRevenue={goalRevenue} 
           />
 

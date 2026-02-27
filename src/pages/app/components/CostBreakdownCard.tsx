@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useFinanceForecast } from "@/hooks/useFinance";
-import { Banknote, FileText, Users, ChevronDown, ChevronUp } from "lucide-react";
+import { Banknote, FileText, Users, ChevronDown, ChevronUp, TrendingDown } from "lucide-react";
 import { useState } from "react";
 
 interface CostBreakdownCardProps {
@@ -56,7 +56,7 @@ export function CostBreakdownCard({ month, year }: CostBreakdownCardProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-medium flex items-center gap-2">
             <Banknote className="h-5 w-5 text-muted-foreground" />
-            Composição dos Custos Fixos
+            Composição de Custos Totais
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -77,7 +77,7 @@ export function CostBreakdownCard({ month, year }: CostBreakdownCardProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <Banknote className="h-5 w-5 text-primary" />
-          Composição dos Custos Fixos
+          Composição de Custos Totais
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -147,12 +147,22 @@ export function CostBreakdownCard({ month, year }: CostBreakdownCardProps) {
           </div>
         )}
 
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-muted-foreground flex items-center gap-2">
+            <TrendingDown className="h-4 w-4" />
+            Despesas Variáveis Lançadas
+          </span>
+          <span className="font-medium">
+            {formatCurrency(breakDown.variableExpenses || 0)}
+          </span>
+        </div>
+
         <Separator className="my-2" />
 
         <div className="flex justify-between items-center text-base">
-          <span className="font-semibold">Total Custos Fixos</span>
+          <span className="font-semibold">Soma Total de Custos</span>
           <span className="font-bold text-primary text-lg">
-            {formatCurrency(breakDown.totalFixedCost)}
+            {formatCurrency((breakDown.totalFixedCost || 0) + (breakDown.variableExpenses || 0))}
           </span>
         </div>
       </CardContent>
