@@ -17,14 +17,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { EmptyState } from "@/components/ui/empty-state"
 import { type Expense, ExpenseCategory, ExpenseStatus } from "@/types/finance"
 import { EXPENSE_CATEGORY_LABELS } from "@/lib/constants"
 import { format, isBefore, startOfDay } from "date-fns"
-import { MoreHorizontal, Pencil, Trash, CheckCircle, AlertCircle } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash, CheckCircle, AlertCircle, FileX } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ExpenseTableProps {
   expenses: Expense[]
+  isLoading?: boolean
   onEdit: (expense: Expense) => void
   onDelete: (expense: Expense) => void
   onMarkAsPaid: (expense: Expense) => void
@@ -47,6 +50,7 @@ const formatCurrency = (value: number) => {
 
 export function ExpenseTable({
   expenses,
+  isLoading = false,
   onEdit,
   onDelete,
   onMarkAsPaid,
@@ -84,10 +88,25 @@ export function ExpenseTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {expenses.length === 0 ? (
+          {isLoading ? (
+             Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-[100px] rounded-full" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="h-4 w-[80px] ml-auto" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-[80px] rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+                </TableRow>
+             ))
+          ) : expenses.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
-                Nenhuma despesa encontrada.
+              <TableCell colSpan={6} className="h-[300px]">
+                <EmptyState 
+                   icon={<FileX className="h-10 w-10 text-muted-foreground/60" />}
+                   title="Nenhuma despesa encontrada"
+                   description="Não há despesas registradas para este período ou com os filtros selecionados."
+                />
               </TableCell>
             </TableRow>
           ) : (

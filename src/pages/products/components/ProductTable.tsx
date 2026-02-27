@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Pagination,
   PaginationContent,
@@ -25,7 +26,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis
 } from "@/components/ui/pagination";
-import { MoreHorizontal, Edit, Trash2, AlertCircle } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, AlertCircle, PackageX } from "lucide-react";
 import type { Product, GetProductsResponse } from "@/types/product";
 import { PRODUCT_UNIT_LABELS } from "@/lib/constants";
 import { useCategories } from "@/hooks/useCategories";
@@ -97,8 +98,12 @@ export function ProductTable({
               ))
             ) : products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    Nenhum produto encontrado.
+                  <TableCell colSpan={8} className="h-[300px]">
+                    <EmptyState 
+                       icon={<PackageX className="h-10 w-10 text-muted-foreground/60" />}
+                       title="Nenhum produto encontrado"
+                       description="Não há produtos cadastrados ou que correspondam a sua busca."
+                    />
                   </TableCell>
                 </TableRow>
             ) : (
@@ -137,15 +142,22 @@ export function ProductTable({
                   <TableCell>{formatCurrency(product.costPrice)}</TableCell>
                   <TableCell>{formatCurrency(product.salePrice)}</TableCell>
                   <TableCell>
-                    <Badge 
-                       variant={product.markup >= TARGET_MARKUP ? "default" : "destructive"}
-                       className={product.markup >= TARGET_MARKUP 
-                         ? "bg-emerald-500 hover:bg-emerald-600 border-none" 
-                         : "bg-red-500 hover:bg-red-600 border-none"
-                       }
-                    >
-                      {formatMarkup(product.markup)}
-                    </Badge>
+                    {(() => {
+                      const cost = Number(product.costPrice) || 0;
+                      const sale = Number(product.salePrice) || 0;
+                      const calcMarkup = cost > 0 ? ((sale - cost) / cost) * 100 : 0;
+                      return (
+                        <Badge 
+                          variant={calcMarkup >= TARGET_MARKUP ? "default" : "destructive"}
+                          className={calcMarkup >= TARGET_MARKUP 
+                            ? "bg-emerald-500 hover:bg-emerald-600 border-none" 
+                            : "bg-red-500 hover:bg-red-600 border-none"
+                          }
+                        >
+                          {formatMarkup(calcMarkup)}
+                        </Badge>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

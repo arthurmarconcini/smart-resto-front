@@ -43,6 +43,7 @@ import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense, useP
 import { ExpenseTable } from "./components/ExpenseTable"
 import { ExpenseForm } from "./components/ExpenseForm"
 import { FinanceForecastCard } from "./components/FinanceForecastCard"
+import { useDebounce } from "@/hooks/useDebounce"
 import { ExpenseStatus, type Expense, type CreateExpenseInput } from "@/types/finance"
 
 const MONTHS = [
@@ -57,6 +58,7 @@ export function FinancePage() {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
   const [statusFilter, setStatusFilter] = useState<ExpenseStatus | "ALL">("ALL")
   const [search, setSearch] = useState("")
+  const debouncedSearch = useDebounce(search, 300)
   
   // Dialogs
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -88,9 +90,9 @@ export function FinancePage() {
        return date.getMonth() === selectedMonth && date.getFullYear() === selectedYear
     })
 
-    // Filter by Search
-    if (search) {
-      const lowerSearch = search.toLowerCase()
+    // Filter by Debounced Search
+    if (debouncedSearch) {
+      const lowerSearch = debouncedSearch.toLowerCase()
       result = result.filter(e => 
         e.description.toLowerCase().includes(lowerSearch) ||
         e.amount.toString().includes(lowerSearch)
@@ -98,7 +100,7 @@ export function FinancePage() {
     }
 
     return result
-  }, [expenses, search, selectedMonth, selectedYear])
+  }, [expenses, debouncedSearch, selectedMonth, selectedYear])
 
   const summary = useMemo(() => {
     const today = startOfDay(new Date())
@@ -298,18 +300,13 @@ export function FinancePage() {
       {/* Main Content */}
       <Card className="shadow-sm">
         <CardContent className="p-0 md:p-6">
-           {isLoading ? (
-             <div className="flex items-center justify-center h-48">
-               <span className="text-muted-foreground">Carregando despesas...</span>
-             </div>
-           ) : (
-             <ExpenseTable 
-                expenses={filteredExpenses}
-                onEdit={handleOpenEdit}
-                onDelete={handleDeleteClick}
-                onMarkAsPaid={handleMarkAsPaid}
-             />
-           )}
+           <ExpenseTable 
+              expenses={filteredExpenses}
+              isLoading={isLoading}
+              onEdit={handleOpenEdit}
+              onDelete={handleDeleteClick}
+              onMarkAsPaid={handleMarkAsPaid}
+           />
         </CardContent>
       </Card>
 

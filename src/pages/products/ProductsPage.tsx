@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,15 +31,19 @@ import { toast } from "sonner";
 
 import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
+import { useDebounce } from "@/hooks/useDebounce";
 import { ProductTable } from "./components/ProductTable";
 import { ProductForm } from "./components/ProductForm";
+import { RevenueSimulator } from "./components/RevenueSimulator";
 import type { Product } from "@/types/product";
+import { useAuth } from "@/store/auth-store";
 
 
 export function ProductsPage() {
   // --- State ---
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   
   // Dialogs
@@ -54,15 +58,22 @@ export function ProductsPage() {
   const { data: productsData, isLoading } = useProducts({
     page,
     limit: 10,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     categoryId: categoryId === "all" ? undefined : categoryId,
   });
   
   const { data: categories } = useCategories();
   const { mutateAsync: deleteProduct } = useDeleteProduct();
+  const { company } = useAuth();
 
   const products = productsData?.data || [];
   const meta = productsData?.meta;
+
+  // Effects
+  // Reset pagination when search or category changes, but only when debounced search updates
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, categoryId]);
 
   // --- Handlers ---
   const handleOpenCreate = () => {
@@ -108,6 +119,13 @@ export function ProductsPage() {
           </Button>
         </div>
 
+        {/* Simulador de Receita */}
+        <RevenueSimulator 
+          products={products} 
+          taxRate={company?.defaultTaxRate}
+          cardFee={company?.defaultCardFee}
+        />
+
         {/* Toolbar / Filters */}
         <div className="bg-card p-4 rounded-lg border shadow-sm flex flex-col sm:flex-row gap-4 items-center">
              <div className="relative w-full sm:w-72">
@@ -117,7 +135,6 @@ export function ProductsPage() {
                   value={search}
                   onChange={(e) => {
                       setSearch(e.target.value);
-                      setPage(1); // Reset page on search
                   }}
                   className="pl-8"
                 />
@@ -127,7 +144,6 @@ export function ProductsPage() {
                 value={categoryId || "all"} 
                 onValueChange={(val) => {
                     setCategoryId(val === "all" ? undefined : val);
-                    setPage(1);
                 }}
               >
                 <SelectTrigger className="w-[200px]">

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Calculator, Info } from "lucide-react";
+import { Loader2, Calculator, Info, AlertTriangle, TrendingUp } from "lucide-react";
 
 // --- Schema ---
 const productSchema = z.object({
@@ -38,7 +38,7 @@ const productSchema = z.object({
   stock: z.coerce.number().min(0, "Estoque deve ser positivo"),
   costPrice: z.coerce.number().min(0.01, "Custo deve ser maior que 0"),
   salePrice: z.coerce.number().min(0.01, "Preço de venda deve ser maior que 0"),
-  markup: z.coerce.number().optional(), // We'll calc this, but form can hold it
+  markup: z.coerce.number().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -58,6 +58,10 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
   const isEditing = !!initialData;
   const isLoading = isCreating || isUpdating;
 
+  // Flag: se o usuário editou manualmente o preço de venda
+  // Produto existente inicia como true (respeitar preço salvo)
+  const [userSetPrice, setUserSetPrice] = useState(isEditing);
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema) as Resolver<ProductFormValues>,
     defaultValues: {
@@ -74,56 +78,64 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
 
   const costPrice = useWatch({ control: form.control, name: "costPrice" });
   const salePrice = useWatch({ control: form.control, name: "salePrice" });
-
-  // --- Smart Pricing Logic ---
   const { setValue } = form;
 
-  // --- Smart Pricing Logic ---
-  // --- Smart Pricing Logic ---
-  useEffect(() => {
-    if (!company || !costPrice || costPrice <= 0) return;
-
-    const tax = (company.defaultTaxRate || 0) / 100;
-    const fee = (company.defaultCardFee || 0) / 100;
-    const margin = (company.desiredProfit || 0) / 100;
-    
-    const denominator = 1 - (tax + fee + margin);
-    
-    let suggestedPrice = 0;
-    if (denominator > 0) {
-        // Fórmula Smart (Markup Divisor)
-        suggestedPrice = costPrice / denominator;
-    } else {
-        // Fallback de Segurança (Se as taxas somarem > 100%)
-        // IMPORTANTE: Deve somar TODAS as taxas, não apenas a margem
-        suggestedPrice = costPrice * (1 + tax + fee + margin);
-    }
-
-    setValue("salePrice", Number(suggestedPrice.toFixed(2)));
-
-  }, [costPrice, company, setValue]);
-
-  // --- Profit Calculation for "Card" ---
+  // --- Taxas da empresa ---
   const taxRate = (company?.defaultTaxRate || 0) / 100;
   const cardFee = (company?.defaultCardFee || 0) / 100;
-  
+  const margin = (company?.desiredProfit || 0) / 100;
+
+  // --- Cálculos ---
+  const denominator = 1 - (taxRate + cardFee + margin);
+  const suggestedPrice = costPrice > 0 && denominator > 0
+    ? costPrice / denominator
+    : costPrice > 0 ? costPrice * (1 + taxRate + cardFee + margin) : 0;
+
+  // Preço mínimo (break-even, sem lucro)
+  const breakEvenDenominator = 1 - (taxRate + cardFee);
+  const breakEvenPrice = costPrice > 0 && breakEvenDenominator > 0
+    ? costPrice / breakEvenDenominator
+    : costPrice;
+
+  // Métricas reais baseadas no salePrice atual
   const taxes = salePrice * (taxRate + cardFee);
   const netRevenue = salePrice - taxes;
   const netProfit = netRevenue - costPrice;
   const realMarkup = costPrice > 0 ? ((salePrice - costPrice) / costPrice) * 100 : 0;
   const realMargin = salePrice > 0 ? (netProfit / salePrice) * 100 : 0;
 
+  const isBelowBreakEven = salePrice > 0 && salePrice < breakEvenPrice;
+  const isBelowSuggested = salePrice > 0 && salePrice < suggestedPrice && !isBelowBreakEven;
+
+  // --- Smart Pricing: auto-calcula salePrice somente se o usuário NÃO editou ---
+  useEffect(() => {
+    if (!company || !costPrice || costPrice <= 0) return;
+    if (userSetPrice) return;
+
+    setValue("salePrice", Number(suggestedPrice.toFixed(2)));
+  }, [costPrice, company, setValue, userSetPrice, suggestedPrice]);
+
+  // --- Handlers ---
+  const handleSalePriceChange = (e: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (e: React.ChangeEvent<HTMLInputElement>) => void) => {
+    setUserSetPrice(true);
+    fieldOnChange(e);
+  };
+
+  const handleUseSuggested = () => {
+    setUserSetPrice(false);
+    setValue("salePrice", Number(suggestedPrice.toFixed(2)));
+  };
 
   const onSubmit = async (values: ProductFormValues) => {
     try {
       if (!company) {
-          toast.error("Erro: Empresa não identificada.");
-          return;
+        toast.error("Erro: Empresa não identificada.");
+        return;
       }
 
       const payload = {
         ...values,
-        companyId: company.id, // Inject companyId
+        companyId: company.id,
         markup: Number(realMarkup.toFixed(2)),
       };
 
@@ -140,6 +152,9 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
       toast.error("Erro ao salvar produto.");
     }
   };
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
     <Form {...form}>
@@ -240,8 +255,8 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
              />
         </div>
 
-        {/* Pricing Section - Highlighted */}
-        <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border space-y-4">
+        {/* Pricing Section */}
+        <div className="bg-muted/20 p-4 rounded-lg border space-y-4">
             <h3 className="text-sm font-semibold flex items-center gap-2">
                 <Calculator className="h-4 w-4" />
                 Precificação Inteligente
@@ -260,12 +275,6 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
                                 step="0.01" 
                                 placeholder="0,00" 
                                 {...field} 
-                                onChange={(e) => {
-                                    // Custom onChange to likely handle smart logic trigger if useEffect isn't preferred, 
-                                    // but useEffect handles it comfortably. 
-                                    // Just passing through.
-                                    field.onChange(e);
-                                }}
                             />
                         </FormControl>
                         <FormDescription>Quanto você paga.</FormDescription>
@@ -281,35 +290,73 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
                         <FormItem>
                         <FormLabel>Preço de Venda (R$)</FormLabel>
                         <FormControl>
-                            <Input type="number" step="0.01" placeholder="0,00" {...field} />
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              placeholder="0,00" 
+                              {...field} 
+                              onChange={(e) => handleSalePriceChange(e, field.onChange)}
+                            />
                         </FormControl>
-                        <FormDescription>Calculado automaticamente.</FormDescription>
+                        <FormDescription>
+                          {userSetPrice ? (
+                            <button
+                              type="button"
+                              onClick={handleUseSuggested}
+                              className="text-primary hover:underline cursor-pointer text-xs"
+                            >
+                              Usar preço sugerido: {formatCurrency(suggestedPrice)}
+                            </button>
+                          ) : (
+                            "Calculado automaticamente."
+                          )}
+                        </FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}
                 />
             </div>
+
+            {/* Preço mínimo (break-even) */}
+            {costPrice > 0 && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                <Info className="h-3 w-3 shrink-0" />
+                <span>
+                  Preço mínimo (cobrir custos + taxas): <strong className="text-foreground">{formatCurrency(breakEvenPrice)}</strong>
+                  {' '}| Preço sugerido (com margem de {(margin * 100).toFixed(0)}%): <strong className="text-primary">{formatCurrency(suggestedPrice)}</strong>
+                </span>
+              </div>
+            )}
             
-            {/* Profit Card / Feedback */}
-            {/* Profit Card / Feedback */}
+            {/* Profit Feedback Card */}
             {costPrice > 0 && salePrice > 0 && (
-                <div className={`text-sm p-3 rounded border ${netProfit > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+                <div className={`text-sm p-3 rounded border ${
+                  isBelowBreakEven 
+                    ? 'bg-destructive/10 border-destructive/30 text-destructive' 
+                    : isBelowSuggested 
+                      ? 'bg-primary/10 border-primary/30 text-primary-foreground'
+                      : 'bg-success/10 border-success/30 text-success'
+                }`}>
                     <div className="flex justify-between items-center font-medium">
-                        <span>Lucro Líquido Real:</span>
-                        <span>
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(netProfit)}
+                        <span className="flex items-center gap-1">
+                          {isBelowBreakEven ? (
+                            <><AlertTriangle className="h-4 w-4" /> Prejuízo Operacional</>
+                          ) : isBelowSuggested ? (
+                            <><Info className="h-4 w-4" /> Abaixo da Margem Desejada</>
+                          ) : (
+                            <><TrendingUp className="h-4 w-4" /> Lucro Líquido Real</>
+                          )}
                         </span>
+                        <span>{formatCurrency(netProfit)}</span>
                     </div>
                     
-                    <div className="flex flex-col gap-1 mt-2 text-xs opacity-90 border-t border-dashed border-gray-300 pt-2">
+                    <div className="flex flex-col gap-1 mt-2 text-xs opacity-90 border-t border-dashed border-current/20 pt-2">
                          <div className="flex justify-between">
-                            <span>Impostos e Taxas ({(taxRate * 100 + cardFee * 100).toFixed(1)}%):</span>
-                            <span className="text-red-600">
-                                - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(taxes)}
-                            </span>
+                            <span>Impostos e Taxas ({((taxRate + cardFee) * 100).toFixed(1)}%):</span>
+                            <span>- {formatCurrency(taxes)}</span>
                         </div>
                          <div className="flex justify-between">
-                            <span>Margem Real:</span>
+                            <span>Margem Líquida:</span>
                             <span>{realMargin.toFixed(2)}%</span>
                         </div>
                          <div className="flex justify-between">
@@ -318,10 +365,10 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
                         </div>
                     </div>
 
-                    {netProfit <= 0 && (
-                        <div className="flex items-center gap-1 mt-2 text-xs font-bold text-red-700">
-                            <Info className="h-3 w-3" />
-                            Cuidado: Prejuízo operacional! Aumente o preço.
+                    {isBelowBreakEven && (
+                        <div className="flex items-center gap-1 mt-2 text-xs font-bold">
+                            <AlertTriangle className="h-3 w-3" />
+                            Cuidado: Você perde dinheiro a cada venda! Aumente o preço para pelo menos {formatCurrency(breakEvenPrice)}.
                         </div>
                     )}
                 </div>
