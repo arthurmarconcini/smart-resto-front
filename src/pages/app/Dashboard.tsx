@@ -13,6 +13,7 @@ import { SalesHistoryChart } from "./components/SalesHistoryChart";
 import { DreChart } from "./components/DreChart";
 import { UrgentExpensesCard } from "./components/UrgentExpensesCard";
 import { CostBreakdownCard } from "./components/CostBreakdownCard";
+import { DashboardKPIs } from "./components/DashboardKPIs";
 
 export function DashboardPage() {
   // Hook Forecast
@@ -80,36 +81,55 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Top KPI Cards Component */}
+        <DashboardKPIs 
+          totalRevenue={totalRevenue}
+          totalExpenses={baseCost + employeeCost + registeredExpenses}
+          goalRevenue={goalRevenue}
+        />
 
+        {/* Second Row: Visual Summary and Detailed Forecast */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* DRE Simplificado (Gráfico) - 2 columns */}
+          <div className="lg:col-span-2 flex flex-col">
+            <DreChart 
+              totalRevenue={totalRevenue} 
+              baseCost={baseCost}
+              employeeCost={employeeCost}
+              registeredExpenses={registeredExpenses} 
+              goalRevenue={goalRevenue} 
+            />
+          </div>
+          
+          {/* Card Previsão Detalhada - 1 column */}
+          <div className="flex flex-col">
+            <FinanceForecastCard 
+              month={currentMonth} 
+              year={currentYear} 
+            />
+          </div>
+        </div>
 
-          {/* Card Ponto de Equilíbrio (Refatorado para usar Hook Híbrido) */}
-          <FinanceForecastCard 
-            month={currentMonth} 
-            year={currentYear} 
-          />
+        {/* Third Row: Analytics and Details */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Histórico de Vendas - 2 columns */}
+          <div className="lg:col-span-2 flex flex-col">
+            <SalesHistoryChart />
+          </div>
 
-          {/* DRE Simplificado (Gráfico) */}
-          <DreChart 
-            totalRevenue={totalRevenue} 
-            baseCost={baseCost}
-            employeeCost={employeeCost}
-            registeredExpenses={registeredExpenses} 
-            goalRevenue={goalRevenue} 
-          />
+          {/* Breakdown de Custos - 1 column */}
+          <div className="flex flex-col">
+            <CostBreakdownCard
+              month={currentMonth}
+              year={currentYear}
+            />
+          </div>
+        </div>
 
-          {/* Breakdown de Custos */}
-          <CostBreakdownCard
-            month={currentMonth}
-            year={currentYear}
-          />
-
-          {/* Histórico de Vendas */}
-          <SalesHistoryChart />
-
+        {/* Fourth Row: Alerts */}
+        <div className="grid grid-cols-1 gap-6">
           {/* Card Previsão de Caixa (Alertas) */}
           <UrgentExpensesCard expenses={expenses} />
-
         </div>
       </div>
     </div>

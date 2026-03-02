@@ -73,12 +73,12 @@ export function DreChart({ totalRevenue, baseCost, employeeCost, registeredExpen
   return (
     <Card className="shadow-sm lg:col-span-2">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div>
             <CardTitle>DRE Simplificado</CardTitle>
             <CardDescription>Receita vs Despesas Totais (Fixo + Variável)</CardDescription>
           </div>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-success"></div>
               Receita

@@ -14,7 +14,7 @@ import { SetupBanner } from "@/components/app/SetupBanner";
 const sidebarItems = [
   // 📊 OPERACIONAL
   {
-    title: "Resumo",
+    title: "Visão Geral",
     icon: LayoutDashboard,
     href: "/dashboard",
     category: "operacional",
