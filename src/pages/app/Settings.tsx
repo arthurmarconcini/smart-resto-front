@@ -35,8 +35,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { EmployeeCostList } from "@/components/app/employee-cost/EmployeeCostList";
-import { Users2 } from "lucide-react";
+import { Users2, ExternalLink } from "lucide-react";
 
 const settingsSchema = z.object({
   // Grupo 1: Estrutura de Custos (Macro)
@@ -44,7 +43,7 @@ const settingsSchema = z.object({
     .min(0, "O valor deve ser positivo"),
   targetProfitValue: z.coerce.number()
     .min(0, "O valor deve ser positivo"),
-  manualEmployeeCostEnabled: z.boolean().default(false),
+  manualEmployeeCostEnabled: z.boolean().default(true),
 
   // Grupo 2: Motor de Precificação (Micro)
   defaultTaxRate: z.coerce.number()
@@ -238,22 +237,49 @@ export function SettingsPage() {
                  />
                </div>
              </CardHeader>
-             <CardContent className="pt-6">
+             <CardContent className="pt-2 pb-6 px-6">
                 {!manualEmployeeCostEnabled ? (
-                   <div className="space-y-4">
-                     <p className="text-sm text-muted-foreground">
-                       Neste modo, o sistema calcula o custo total com base nos funcionários cadastrados abaixo.
-                       Adicione, edite ou remova funcionários para manter seu financeiro preciso.
-                     </p>
-                     <EmployeeCostList />
+                   <div className="flex flex-col items-center justify-center py-10 px-6 text-center border-2 border-dashed rounded-xl bg-primary/5 border-primary/20 space-y-4">
+                     <div className="p-3 bg-primary/10 rounded-full mb-1">
+                       <Users2 className="h-8 w-8 text-primary opacity-90" />
+                     </div>
+                     <div className="space-y-1">
+                       <h3 className="text-xl font-bold tracking-tight text-foreground">Gestão Inteligente de Equipe Ativada</h3>
+                       <p className="text-sm text-muted-foreground/80 max-w-lg mx-auto leading-relaxed">
+                         O modo de cálculo está <strong className="text-primary font-medium">automatizado</strong>. O sistema gerencia os custos totais com base na ficha de cadastro de cada membro da sua equipe.
+                       </p>
+                     </div>
+                     <Button 
+                       type="button"
+                       size="lg"
+                       onClick={() => navigate('/dashboard/employee-costs')}
+                       className="mt-6 font-semibold"
+                     >
+                       <ExternalLink className="mr-2 h-4 w-4" />
+                       Acessar Cadastro de Funcionários
+                     </Button>
                    </div>
                 ) : (
-                  <div className="space-y-4"> 
-                    <p className="text-sm text-muted-foreground bg-yellow-500/10 p-3 rounded-md border border-yellow-500/20">
-                      <strong>Atenção:</strong> No modo manual, você deve lançar o custo total com funcionários como uma <strong>Despesa Fixa</strong> na tela de Financeiro todos os meses. O sistema ignorará o cadastro detalhado de funcionários para cálculos automáticos.
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Recomendamos usar o modo automático (desativando o Modo Manual) para ter uma visão mais detalhada e precisa dos seus custos.
+                  <div className="space-y-5"> 
+                    <div className="bg-amber-500/10 p-5 rounded-xl border border-amber-500/30">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-amber-500/20 rounded-lg shrink-0">
+                          <Calculator className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                        </div>
+                        <div className="space-y-1.5 pt-0.5">
+                          <h4 className="text-sm font-bold text-amber-900 dark:text-amber-400">Modo Manual Ativado</h4>
+                          <p className="text-sm text-amber-800/80 dark:text-amber-500/90 leading-relaxed">
+                            Neste modo, o sistema <strong className="font-semibold">ignora qualquer cadastro detalhado</strong> de funcionários da funcionalidade Gestão de Equipe.
+                          </p>
+                          <p className="text-sm text-amber-800/80 dark:text-amber-500/90 leading-relaxed mt-2">
+                             Para que seus custos continuem corretos, você é o responsável por informar o custo total (salários + encargos) lançando este valor na <strong className="font-semibold">Despesa Fixo Base (nesta tela)</strong>, ou adicionando manualmente como uma <strong className="font-semibold">Despesa Fixa nos Lançamentos de Despesas</strong> todos os meses.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground text-center">
+                       Mude o switch de <strong className="text-foreground">Modo Manual</strong> na aba superior para desativá-lo e voltar a habilitar o cálculo automatizado individualizado pela <span className="text-primary cursor-pointer hover:underline font-medium" onClick={() => navigate('/dashboard/employee-costs')}>Feature de Gestão de Equipe</span>.
                     </p>
                   </div>
                 )}
