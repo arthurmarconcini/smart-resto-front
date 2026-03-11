@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Receipt } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { Eye, Receipt, FileSpreadsheet } from "lucide-react";
+import { format, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { SaleType, type Sale } from "@/types/sales";
 import { SaleDetailsDialog } from "./SaleDetailsDialog";
@@ -21,6 +21,18 @@ interface SalesHistoryTableProps {
   isLoading: boolean;
 }
 
+export interface DayGroup {
+  dateStr: string;
+  displayDate: Date;
+  totalAmount: number;
+  totalSales: number;
+  itemizedCount: number;
+  dailyTotalCount: number;
+  itemsCount: number;
+  sales: Sale[];
+  hasRecent: boolean;
+}
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -29,7 +41,56 @@ function formatCurrency(value: number) {
 }
 
 export function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) {
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [selectedDayGroup, setSelectedDayGroup] = useState<DayGroup | null>(null);
+
+  // Group sales by day
+  const groupedSales = useMemo(() => {
+    if (!sales) return [];
+
+    const groups = new Map<string, DayGroup>();
+
+    sales.forEach((sale) => {
+      const saleDate = new Date(sale.date);
+      const startOfSaleDay = startOfDay(saleDate);
+      const dateStr = startOfSaleDay.toISOString();
+      const isRecent = new Date().getTime() - saleDate.getTime() < 3600000;
+
+      if (!groups.has(dateStr)) {
+        groups.set(dateStr, {
+          dateStr,
+          displayDate: startOfSaleDay,
+          totalAmount: 0,
+          totalSales: 0,
+          itemizedCount: 0,
+          dailyTotalCount: 0,
+          itemsCount: 0,
+          sales: [],
+          hasRecent: false,
+        });
+      }
+
+      const group = groups.get(dateStr)!;
+      group.sales.push(sale);
+      group.totalSales += 1;
+      group.totalAmount += Number(sale.totalAmount);
+      
+      if (sale.type === SaleType.ITEMIZED) {
+        group.itemizedCount += 1;
+        if (sale.items) {
+          group.itemsCount += sale.items.length;
+        }
+      } else {
+        group.dailyTotalCount += 1;
+      }
+      
+      if (isRecent) group.hasRecent = true;
+    });
+
+    // Sort descending by date
+    return Array.from(groups.values()).sort(
+      (a, b) => b.displayDate.getTime() - a.displayDate.getTime()
+    );
+  }, [sales]);
 
   if (isLoading) {
     return <SaleHistorySkeleton />;
@@ -55,46 +116,42 @@ export function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Data e Hora</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Itens</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Resumo do Dia</TableHead>
+              <TableHead>Itens / Lançamentos</TableHead>
               <TableHead className="text-right">Valor Total</TableHead>
               <TableHead className="text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sales.map((sale) => {
-              const isRecent =
-                new Date().getTime() - new Date(sale.date).getTime() < 3600000;
-
+            {groupedSales.map((group) => {
               return (
-                <TableRow key={sale.id}>
+                <TableRow key={group.dateStr}>
                   <TableCell>
                     <div className="space-y-1">
-                      <p className="font-medium">
-                        {format(new Date(sale.date), "dd/MM/yyyy 'às' HH:mm")}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(sale.date), {
-                          addSuffix: true,
+                      <p className="font-medium capitalize">
+                        {format(group.displayDate, "dd 'de' MMMM", {
                           locale: ptBR,
                         })}
+                      </p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {format(group.displayDate, "EEEE", { locale: ptBR })}
                       </p>
                     </div>
                   </TableCell>
 
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          sale.type === SaleType.DAILY_TOTAL
-                            ? "secondary"
-                            : "default"
-                        }
-                      >
-                        {sale.type === SaleType.DAILY_TOTAL ? "Fechamento" : "PDV"}
-                      </Badge>
-                      {isRecent && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {group.dailyTotalCount > 0 && (
+                        <Badge variant="secondary">Fechamento Manual</Badge>
+                      )}
+                      {group.itemizedCount > 0 && (
+                        <Badge variant="default" className="gap-1">
+                          <FileSpreadsheet className="h-3 w-3" />
+                         {group.itemizedCount} Pedido(s)
+                        </Badge>
+                      )}
+                      {group.hasRecent && (
                         <Badge
                           variant="outline"
                           className="text-green-600 border-green-600/30"
@@ -106,18 +163,17 @@ export function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) 
                   </TableCell>
 
                   <TableCell>
-                    {sale.type === SaleType.ITEMIZED && sale.items ? (
-                      <span className="text-sm text-muted-foreground">
-                        {sale.items.length} produto(s)
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>{group.totalSales} registro(s) no dia</p>
+                      {group.itemsCount > 0 && (
+                        <p className="text-xs">{group.itemsCount} produtos vendidos</p>
+                      )}
+                    </div>
                   </TableCell>
 
                   <TableCell className="text-right">
-                    <span className="font-semibold">
-                      {formatCurrency(Number(sale.totalAmount))}
+                    <span className="font-semibold text-lg text-foreground">
+                      {formatCurrency(group.totalAmount)}
                     </span>
                   </TableCell>
 
@@ -125,7 +181,7 @@ export function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) 
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSelectedSale(sale)}
+                      onClick={() => setSelectedDayGroup(group)}
                       className="hover:bg-primary/10"
                     >
                       <Eye className="h-4 w-4 mr-2" />
@@ -140,9 +196,9 @@ export function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) 
       </div>
 
       <SaleDetailsDialog
-        sale={selectedSale}
-        open={!!selectedSale}
-        onOpenChange={(open) => !open && setSelectedSale(null)}
+        dayGroup={selectedDayGroup}
+        open={!!selectedDayGroup}
+        onOpenChange={(open) => !open && setSelectedDayGroup(null)}
       />
     </>
   );

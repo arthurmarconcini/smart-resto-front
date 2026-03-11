@@ -17,6 +17,7 @@ import { DailySalesForm } from "./components/DailySalesForm";
 import { SalesHistoryTable } from "./components/SalesHistoryTable";
 import { SalesFilters } from "./components/SalesFilters";
 import { TodaySummaryCard } from "./components/TodaySummaryCard";
+import { AnotaAiUpload } from "./components/AnotaAiUpload";
 import { useSales, salesKeys } from "@/hooks/useSales";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -54,6 +55,7 @@ export function SalesPage() {
           <TabsTrigger value="history">Histórico</TabsTrigger>
           <TabsTrigger value="daily">Fechamento Rápido</TabsTrigger>
           <TabsTrigger value="pos">Venda Detalhada (PDV)</TabsTrigger>
+          <TabsTrigger value="import">Importar Anota Aí</TabsTrigger>
         </TabsList>
 
         <TabsContent value="history" className="space-y-4">
@@ -85,6 +87,10 @@ export function SalesPage() {
 
         <TabsContent value="pos">
           <PointOfSale />
+        </TabsContent>
+
+        <TabsContent value="import">
+          <AnotaAiUpload />
         </TabsContent>
       </Tabs>
     </div>

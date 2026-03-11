@@ -138,3 +138,61 @@ export function useSalesHistory() {
 
   return { data, isLoading };
 }
+
+export interface UploadAnotaAiResponse {
+  sucesso: boolean;
+  totalProcessado: number;
+  vendasCriadas: number;
+  erros: number;
+  detalhesErros: Array<{
+    linha: number;
+    erro: string;
+    dados: Record<string, unknown>;
+  }>;
+}
+
+/**
+ * Faz upload do relatório do Anota Aí (XLSX) para importe de vendas
+ */
+export function useUploadAnotaAiReport() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const { data } = await api.post<UploadAnotaAiResponse>(
+        "/sales/upload-anota-ai",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      return data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: salesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ["revenue"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      if (result.sucesso) {
+        toast.success("Importação concluída!", {
+          description: `${result.vendasCriadas} venda(s) importada(s) com sucesso.`,
+        });
+      } else {
+        toast.warning("Importação finalizada com ressalvas", {
+          description: `Importação gerou ${result.vendasCriadas} vendas. Houve ${result.erros} erro(s).`,
+        });
+      }
+    },
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { error?: string, message?: string } } };
+      const message =
+        axiosError.response?.data?.error || 
+        axiosError.response?.data?.message ||
+        "Erro ao enviar o relatório do Anota Aí";
+      toast.error("Erro na importação", { description: message });
+    },
+  });
+}
