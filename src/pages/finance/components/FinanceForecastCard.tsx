@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { useFinanceForecast } from "@/hooks/useFinance"
 import { useSales } from "@/hooks/useSales"
-import { Target, TrendingUp, DollarSign, Info } from "lucide-react"
+import { Target, TrendingUp, Info } from "lucide-react"
 import { differenceInCalendarDays, endOfMonth, startOfToday } from "date-fns"
 
 
@@ -123,7 +123,6 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
                 <Target className="h-5 w-5 text-primary" />
                 Previsão Detalhada
             </CardTitle>
-             <DollarSign className="h-4 w-4 text-muted-foreground" />
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -138,51 +137,57 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
            
            <Progress value={breakEvenProgress} className="h-2" />
            
-            <div className="flex flex-wrap items-center justify-center gap-1 text-xs text-muted-foreground mt-2">
-              <span className="mr-1">Composição:</span>
-              
-              {/* Custo Base */}
-              {(() => {
-                const baseCost = breakDown.genericFixedCost || 0;
-                return (
-                  <div className="flex items-center gap-1 font-medium bg-muted/50 px-2 py-0.5 rounded-md cursor-help border border-border/50" 
-                       title={`Custo base de manutenção configurado da empresa`}>
-                    Base ({formatCurrency(baseCost)})
-                  </div>
-                );
-              })()}
+            <div className="mt-5 border rounded-lg p-4 bg-muted/10 shadow-sm">
+                <h4 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Composição de Custos</h4>
+                <div className="space-y-2">
+                    {/* Custo Base */}
+                    {(() => {
+                        const baseCost = breakDown.genericFixedCost || 0;
+                        return (
+                            <div className="flex justify-between items-center text-sm" title="Custo base de manutenção configurado da empresa">
+                                <span className="text-muted-foreground">Custo Base</span>
+                                <span className="font-medium text-foreground">{formatCurrency(baseCost)}</span>
+                            </div>
+                        );
+                    })()}
+                    
+                    {/* Funcionários */}
+                    {(() => {
+                        const employeeCost = forecast.fixedCostsBreakdown?.employeeCosts ?? breakDown.totalEmployeeCost ?? 0;
+                        if (employeeCost > 0) {
+                            return (
+                                <div className="flex justify-between items-center text-sm" title={`Custo total com ${forecast.fixedCostsBreakdown?.employees?.length || 0} funcionário(s) cadastrado(s)`}>
+                                    <span className="text-muted-foreground">
+                                      Funcionários
+                                    </span>
+                                    <span className="font-medium text-foreground">{formatCurrency(employeeCost)}</span>
+                                </div>
+                            );
+                        }
+                        return null;
+                    })()}
+                    
+                    {/* Despesas */}
+                    {(() => {
+                        const registeredExpenses = (breakDown.detailedFixedCost || 0) + (breakDown.variableExpenses || 0);
+                        return (
+                            <div className="flex justify-between items-center text-sm" title={`Soma das contas e despesas lançadas: Fixas (${formatCurrency(breakDown.detailedFixedCost || 0)}) + Variáveis (${formatCurrency(breakDown.variableExpenses || 0)})`}>
+                                <span className="text-muted-foreground flex items-center gap-1">
+                                    Despesas Gerais
+                                    <Info className="h-3.5 w-3.5 opacity-70" />
+                                </span>
+                                <span className="font-medium text-destructive">{formatCurrency(registeredExpenses)}</span>
+                            </div>
+                        );
+                    })()}
+                </div>
 
-              {(() => {
-                const employeeCost = forecast.fixedCostsBreakdown?.employeeCosts ?? breakDown.totalEmployeeCost ?? 0;
-                if (employeeCost > 0) {
-                  return (
-                    <>
-                      <span className="text-muted-foreground/50">+</span>
-                      <div 
-                        className="flex items-center gap-1 font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-md cursor-help border border-primary/20" 
-                        title={`Custo total com ${forecast.fixedCostsBreakdown?.employees?.length || 0} funcionário(s) cadastrado(s)`}
-                      >
-                        👥 Funcionários ({formatCurrency(employeeCost)})
-                      </div>
-                    </>
-                  );
-                }
-                return null;
-              })()}
-              
-              <span className="text-muted-foreground/50">+</span>
-              
-              {/* Despesas Lançadas (Fixas + Variáveis) */}
-              {(() => {
-                const registeredExpenses = (breakDown.detailedFixedCost || 0) + (breakDown.variableExpenses || 0);
-                return (
-                  <div className="flex items-center gap-1 font-medium bg-destructive/10 text-destructive px-2 py-0.5 rounded-md cursor-help border border-destructive/20"
-                       title={`Soma das contas e despesas lançadas: Fixas (${formatCurrency(breakDown.detailedFixedCost || 0)}) + Variáveis (${formatCurrency(breakDown.variableExpenses || 0)})`}>
-                    Despesas ({formatCurrency(registeredExpenses)})
-                    <Info className="h-3 w-3 opacity-70" />
-                  </div>
-                );
-              })()}
+                <div className="border-t border-border/50 my-3" />
+
+                <div className="flex justify-between items-center">
+                    <span className="text-sm font-bold text-foreground">Saldo de Custos</span>
+                    <span className="text-lg font-bold text-destructive">{formatCurrency(breakEvenRevenue)}</span>
+                </div>
             </div>
         </div>
 
