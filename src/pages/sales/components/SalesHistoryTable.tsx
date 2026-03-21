@@ -41,7 +41,7 @@ function formatCurrency(value: number) {
 }
 
 export function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) {
-  const [selectedDayGroup, setSelectedDayGroup] = useState<DayGroup | null>(null);
+  const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
 
   // Group sales by day
   const groupedSales = useMemo(() => {
@@ -91,6 +91,11 @@ export function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) 
       (a, b) => b.displayDate.getTime() - a.displayDate.getTime()
     );
   }, [sales]);
+
+  const selectedDayGroup = useMemo(() => {
+    if (!selectedDateStr) return null;
+    return groupedSales.find(g => g.dateStr === selectedDateStr) || null;
+  }, [selectedDateStr, groupedSales]);
 
   if (isLoading) {
     return <SaleHistorySkeleton />;
@@ -181,7 +186,7 @@ export function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) 
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSelectedDayGroup(group)}
+                      onClick={() => setSelectedDateStr(group.dateStr)}
                       className="hover:bg-primary/10"
                     >
                       <Eye className="h-4 w-4 mr-2" />
@@ -197,8 +202,8 @@ export function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) 
 
       <SaleDetailsDialog
         dayGroup={selectedDayGroup}
-        open={!!selectedDayGroup}
-        onOpenChange={(open) => !open && setSelectedDayGroup(null)}
+        open={!!selectedDateStr}
+        onOpenChange={(open) => !open && setSelectedDateStr(null)}
       />
     </>
   );

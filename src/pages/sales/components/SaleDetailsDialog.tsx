@@ -12,8 +12,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SaleType } from "@/types/sales";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Receipt, Calendar, DollarSign, FileSpreadsheet } from "lucide-react";
+import { Receipt, Calendar, DollarSign, FileSpreadsheet, Trash, Edit } from "lucide-react";
 import type { DayGroup } from "./SalesHistoryTable";
+import { useDeleteSale } from "@/hooks/useSales";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import type { Sale } from "@/types/sales";
+import { EditSaleDialog } from "./EditSaleDialog";
+
 import {
   Accordion,
   AccordionContent,
@@ -39,7 +55,20 @@ export function SaleDetailsDialog({
   open,
   onOpenChange,
 }: SaleDetailsDialogProps) {
+  const [saleToDelete, setSaleToDelete] = useState<Sale | null>(null);
+  const [saleToEdit, setSaleToEdit] = useState<Sale | null>(null);
+  const { mutate: deleteSale, isPending: isDeleting } = useDeleteSale();
+
+  const handleDelete = () => {
+    if (saleToDelete) {
+      deleteSale(saleToDelete.id, {
+        onSuccess: () => setSaleToDelete(null),
+      });
+    }
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh]">
         <DialogHeader>
@@ -105,7 +134,7 @@ export function SaleDetailsDialog({
                 
                 <Accordion type="multiple" className="w-full">
                   {dayGroup.sales.map((sale) => (
-                    <AccordionItem value={`sale-${sale.id}`} key={sale.id} className="border border-border rounded-lg mb-2 overflow-hidden px-4">
+                    <AccordionItem value={`sale-${sale.id}`} key={sale.id} className="border border-border rounded-lg mb-2 overflow-hidden px-4 border-b!">
                       <AccordionTrigger className="hover:no-underline py-3">
                         <div className="flex items-center justify-between w-full pr-4">
                           <div className="flex items-center gap-3">
@@ -129,6 +158,17 @@ export function SaleDetailsDialog({
                       </AccordionTrigger>
                       
                       <AccordionContent className="pt-2 pb-4">
+                        <div className="flex justify-end gap-2 mb-4 px-2">
+                          <Button size="sm" variant="outline" onClick={() => setSaleToEdit(sale)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => setSaleToDelete(sale)}>
+                            <Trash className="h-4 w-4 mr-2" />
+                            Excluir
+                          </Button>
+                        </div>
+
                         {sale.type === SaleType.ITEMIZED && sale.items && sale.items.length > 0 ? (
                           <div className="space-y-2 mt-2">
                             {sale.items.map((item) => (
@@ -166,5 +206,33 @@ export function SaleDetailsDialog({
         )}
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={!!saleToDelete} onOpenChange={(open) => !open && setSaleToDelete(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir Venda?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita. 
+            O estoque dos produtos será revertido e o faturamento recalculado.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDelete} 
+            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isDeleting ? "Excluindo..." : "Excluir"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <EditSaleDialog 
+      sale={saleToEdit} 
+      onClose={() => setSaleToEdit(null)} 
+    />
+    </>
   );
 }

@@ -89,6 +89,57 @@ export function useCreateSale() {
     onError: (error: unknown) => {
       const axiosError = error as { response?: { data?: { error?: string } } };
       const message = axiosError.response?.data?.error || "Erro ao registrar venda";
+      toast.success("Erro", { description: message });
+    },
+  });
+}
+
+/**
+ * Atualiza uma venda existente
+ */
+export function useUpdateSale() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...saleData }: Partial<CreateSaleInput> & { id: string }) => {
+      const { data } = await api.put<Sale>(`/sales/${id}`, saleData);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: salesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ["revenue"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      
+      toast.success("Venda atualizada com sucesso!");
+    },
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      const message = axiosError.response?.data?.error || "Erro ao atualizar venda";
+      toast.error("Erro", { description: message });
+    },
+  });
+}
+
+/**
+ * Exclui uma venda existente
+ */
+export function useDeleteSale() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/sales/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: salesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ["revenue"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      
+      toast.success("Venda excluída com sucesso!");
+    },
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      const message = axiosError.response?.data?.error || "Erro ao excluir venda";
       toast.error("Erro", { description: message });
     },
   });

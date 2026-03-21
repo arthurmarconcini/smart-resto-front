@@ -1,17 +1,18 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   Form,
@@ -29,20 +30,25 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
-import { useCreateSale } from "@/hooks/useSales";
-import { SaleType } from "@/types/sales";
+import { useUpdateSale } from "@/hooks/useSales";
+import { SaleType, type Sale } from "@/types/sales";
 
 const schema = z.object({
   date: z.date({ message: "A data é obrigatória." }),
   totalAmount: z.coerce
     .number({ message: "Informe um valor numérico." })
-    .positive({ message: "O valor deve ser positivo." }),
+    .nonnegative({ message: "O valor deve ser maior ou igual a zero." }),
 });
 
 type FormValues = z.infer<typeof schema>;
 
-export function DailySalesForm() {
-  const { mutate: createSale, isPending } = useCreateSale();
+interface EditSaleDialogProps {
+  sale: Sale | null;
+  onClose: () => void;
+}
+
+export function EditSaleDialog({ sale, onClose }: EditSaleDialogProps) {
+  const { mutate: updateSale, isPending } = useUpdateSale();
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -52,33 +58,44 @@ export function DailySalesForm() {
     },
   });
 
-  function onSubmit(data: FormValues) {
-    createSale(
+  useEffect(() => {
+    if (sale) {
+      form.reset({
+        date: new Date(sale.date),
+        totalAmount: Number(sale.totalAmount),
+      });
+    }
+  }, [sale, form]);
+
+  const onSubmit = (data: FormValues) => {
+    if (!sale) return;
+
+    updateSale(
       {
+        id: sale.id,
         date: data.date.toISOString(),
-        totalAmount: data.totalAmount,
-        type: SaleType.DAILY_TOTAL,
+        ...(sale.type === SaleType.DAILY_TOTAL ? { totalAmount: data.totalAmount } : {}),
       },
       {
         onSuccess: () => {
-          form.reset({
-            date: new Date(),
-            totalAmount: 0,
-          });
+          onClose();
         },
       }
     );
-  }
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Fechamento de Caixa Diário</CardTitle>
-        <CardDescription>
-          Registre o valor total das vendas do dia.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Dialog open={!!sale} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Editar Venda</DialogTitle>
+          <DialogDescription>
+            {sale?.type === SaleType.ITEMIZED
+              ? "Para vendas detalhadas, no momento é possível apenas alterar a data. Para modificar produtos, exclua e recrie o pedido."
+              : "Atualize os dados do fechamento diário."}
+          </DialogDescription>
+        </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -123,31 +140,43 @@ export function DailySalesForm() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="totalAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor Total (R$)</FormLabel>
-                  <FormControl>
-                    <CurrencyInput
-                      placeholder="0,00"
-                      {...field}
-                      value={field.value as number}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {sale?.type === SaleType.DAILY_TOTAL && (
+              <FormField
+                control={form.control}
+                name="totalAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor Total (R$)</FormLabel>
+                    <FormControl>
+                      <CurrencyInput
+                        {...field}
+                        value={field.value as number}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Salvando..." : "Salvar Fechamento"}
-            </Button>
+            <div className="flex justify-end pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="mr-2"
+                disabled={isPending}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
