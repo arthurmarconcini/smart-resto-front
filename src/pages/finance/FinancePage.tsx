@@ -69,7 +69,6 @@ export function FinancePage() {
   const { data: expenses = [], isLoading } = useExpenses({
     month: selectedMonth + 1, // API likely expects 1-12
     year: selectedYear,
-    status: statusFilter === "ALL" ? undefined : statusFilter,
   })
   
   const createMutation = useCreateExpense()
@@ -78,17 +77,23 @@ export function FinancePage() {
   const payExpenseMutation = usePayExpense()
 
   // Computed Values
-  const filteredExpenses = useMemo(() => {
-    let result = expenses
-
-    // Filter by Month/Year
-    result = result.filter(e => {
+  const monthExpenses = useMemo(() => {
+    return expenses.filter(e => {
        const date = new Date(e.dueDate)
        // Adjust for timezone offset to ensure we get the correct "day" part if needed, 
        // but strictly for Month/Year, simple parsing usually works if ISO string.
        // However, to be safe with local dates:
        return date.getMonth() === selectedMonth && date.getFullYear() === selectedYear
     })
+  }, [expenses, selectedMonth, selectedYear])
+
+  const filteredExpenses = useMemo(() => {
+    let result = monthExpenses
+
+    // Filter by Status
+    if (statusFilter !== "ALL") {
+      result = result.filter(e => e.status === statusFilter)
+    }
 
     // Filter by Debounced Search
     if (debouncedSearch) {
@@ -100,11 +105,11 @@ export function FinancePage() {
     }
 
     return result
-  }, [expenses, debouncedSearch, selectedMonth, selectedYear])
+  }, [monthExpenses, debouncedSearch, statusFilter])
 
   const summary = useMemo(() => {
     const today = startOfDay(new Date())
-    return filteredExpenses.reduce((acc, expense) => {
+    return monthExpenses.reduce((acc, expense) => {
       const amount = Number(expense.amount) || 0;
       // Pending
       if (expense.status === ExpenseStatus.PENDING) {
@@ -121,7 +126,7 @@ export function FinancePage() {
       }
       return acc
     }, { pending: 0, paid: 0, overdue: 0 })
-  }, [filteredExpenses])
+  }, [monthExpenses])
 
   // Handlers
   const handleOpenCreate = () => {
@@ -194,47 +199,53 @@ export function FinancePage() {
         </Button>
       </div>
 
-      {/* Forecast Card */}
-      <FinanceForecastCard month={selectedMonth + 1} year={selectedYear} />
+      {/* Dashboard Grid */}
+      <div className="grid gap-6 md:grid-cols-12">
+        
+        {/* Left Side: Summary Cards */}
+        <div className="md:col-span-12 lg:col-span-4 flex flex-col gap-4">
+          <Card className="border-l-4 border-l-primary shadow-sm flex-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">A Pagar (Mês)</CardTitle>
+              <DollarSign className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(summary.pending)}</div>
+              <p className="text-xs text-muted-foreground">
+                Despesas pendentes deste mês
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-success shadow-sm flex-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pago (Mês)</CardTitle>
+              <CheckCircle2 className="h-5 w-5 text-success" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-success">{formatCurrency(summary.paid)}</div>
+              <p className="text-xs text-muted-foreground">
+                Total liquidado este mês
+              </p>
+            </CardContent>
+          </Card>
+          <Card className={`border-l-4 shadow-sm flex-1 ${summary.overdue > 0 ? "border-l-destructive bg-destructive/5" : "border-l-muted"}`}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-destructive">Vencido</CardTitle>
+              <AlertCircle className="h-5 w-5 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-destructive">{formatCurrency(summary.overdue)}</div>
+              <p className="text-xs text-destructive/80">
+                Atenção! Contas atrasadas.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-l-4 border-l-primary shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">A Pagar (Mês)</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summary.pending)}</div>
-            <p className="text-xs text-muted-foreground">
-              Despesas pendentes deste mês
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-success shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pago (Mês)</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">{formatCurrency(summary.paid)}</div>
-            <p className="text-xs text-muted-foreground">
-              Total liquidado este mês
-            </p>
-          </CardContent>
-        </Card>
-        <Card className={`border-l-4 shadow-sm ${summary.overdue > 0 ? "border-l-destructive bg-destructive/5" : "border-l-muted"}`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-destructive">Vencido</CardTitle>
-            <AlertCircle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{formatCurrency(summary.overdue)}</div>
-            <p className="text-xs text-destructive/80">
-              Atenção! Contas atrasadas.
-            </p>
-          </CardContent>
-        </Card>
+        {/* Right Side: Forecast Card */}
+        <div className="md:col-span-12 lg:col-span-8 flex flex-col">
+          <FinanceForecastCard month={selectedMonth + 1} year={selectedYear} className="flex-1 h-full" />
+        </div>
       </div>
 
       {/* Filters Toolbar */}

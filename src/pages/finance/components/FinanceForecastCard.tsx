@@ -4,20 +4,16 @@ import { useFinanceForecast } from "@/hooks/useFinance"
 import { useSales } from "@/hooks/useSales"
 import { Target, TrendingUp, Info } from "lucide-react"
 import { differenceInCalendarDays, endOfMonth, startOfToday } from "date-fns"
+import { cn } from "@/lib/utils"
 
 
 interface FinanceForecastCardProps {
   month: number
   year: number
+  className?: string
 }
 
-// Simple internal tooltip wrapper in case the project doesn't have the UI component yet, 
-// using crude title attribute as backup if needed, but trying to be clean.
-// Actually, since I didn't find the Tooltip component in the search, I'll use a standard browser title on an icon 
-// to avoid import errors if the file doesn't exist. 
-// User said "Se possível", so I will use a simple implementation.
-
-export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
+export function FinanceForecastCard({ month, year, className }: FinanceForecastCardProps) {
   const { data: forecast, isLoading: isLoadingForecast, error: forecastError } = useFinanceForecast(month, year)
   const { data: sales, isLoading: isLoadingSales, error: salesError } = useSales({ month, year })
 
@@ -26,11 +22,11 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
 
   if (isLoading) {
     return (
-        <Card className="border-l-4 border-l-primary shadow-sm animate-pulse">
+        <Card className={cn("border-l-4 border-l-primary shadow-sm animate-pulse flex flex-col", className)}>
             <CardHeader className="pb-2">
                 <div className="h-6 w-1/3 bg-muted rounded" />
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 flex-1">
                 <div className="h-4 w-full bg-muted rounded" />
                 <div className="h-2 w-full bg-muted rounded" />
             </CardContent>
@@ -40,14 +36,14 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
 
   if (hasError) {
     return (
-      <Card className="border-l-4 border-l-destructive shadow-sm">
+      <Card className={cn("border-l-4 border-l-destructive shadow-sm flex flex-col", className)}>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-medium flex items-center gap-2 text-destructive">
             <Target className="h-5 w-5" />
             Erro ao carregar previsão
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1">
           <p className="text-sm text-muted-foreground">
             {forecastError?.message || salesError?.message || 'Erro desconhecido'}
           </p>
@@ -58,14 +54,14 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
 
   if (!forecast?.breakDown || !forecast?.targets || !Array.isArray(sales)) {
     return (
-      <Card className="border-l-4 border-l-warning shadow-sm">
+      <Card className={cn("border-l-4 border-l-warning shadow-sm flex flex-col", className)}>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-medium flex items-center gap-2">
             <Target className="h-5 w-5 text-warning" />
             Dados Incompletos
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1">
           <p className="text-sm text-muted-foreground">
             Configure seus dados financeiros para visualizar a previsão
           </p>
@@ -116,7 +112,7 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
   const dailyTarget = leftToPay / actualDaysRemaining
 
   return (
-    <Card className="border-l-4 border-l-primary shadow-sm">
+    <Card className={cn("border-l-4 border-l-primary shadow-sm flex flex-col", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
@@ -125,7 +121,7 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
             </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 flex-1 flex flex-col justify-between">
         {/* Break-even Progress */}
         <div className="space-y-2">
            <div className="flex justify-between text-sm">
@@ -192,7 +188,7 @@ export function FinanceForecastCard({ month, year }: FinanceForecastCardProps) {
         </div>
 
         {/* Daily Target */}
-        <div className="pt-2 flex items-center gap-4 bg-muted/20 p-3 rounded-md">
+        <div className="pt-2 flex items-center gap-4 bg-muted/20 p-3 rounded-md mt-6">
             <div className="p-2 bg-primary/10 rounded-full">
                 <TrendingUp className="h-5 w-5 text-primary" />
             </div>

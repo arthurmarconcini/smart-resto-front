@@ -80,7 +80,7 @@ export function useUpdateExpense() {
       id: string
       data: UpdateExpenseInput
     }) => {
-      const { data } = await api.patch<Expense>(`/finance/expenses/${id}`, updateData)
+      const { data } = await api.put<Expense>(`/finance/expenses/${id}`, updateData)
       return data
     },
     onSuccess: () => {
